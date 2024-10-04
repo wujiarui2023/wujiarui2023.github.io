@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script>
+function loadXML(cha)
+{
+if(cha.length==0)
+{
+document.getElementById("result").innerHTML="";
+return;
+}
+var xmlhttp;
+xmlhttp=new XMLHttpRequest();
+xmlhttp.onreadystatechange=function()
+{
+if(xmlhttp.readyState==4 && xmlhttp.status==200)
+{
+document.getElementById("result").innerHTML=xmlhttp.responseText;
+}
+}
+xmlhttp.open("GET","a.php?name="+cha,true);
+xmlhttp.send();
+}
+</script>
+<title>字母金句</title>
+<link rel="icon" href="logo.ico">
+<!--[if lt IE 9]><script>document.createElement("canvas");</script><![endif]-->
+</head>
+<body>
+<div style="width: 500px;height: 100px;line-height: 100px;text-align:center;"><form>
+<h1 style="font-family: 钉钉进步体;">请输入一个字母（a-e）</h1>
+字母:<input type="text" onkeyup="loadXML(this.value)"><br>
+</form>
+</div>
+
+<p id="result"></p>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>调查问卷</title>
+</head>
+<body>
+<img src="data:image/svg+xml;base64,PHN2ZyBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjIiIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJtMyAxMi43djcuM2MwIC42Mi41MTkgMSAxIDFoNy4zdi04LjN6bTE4IDBoLTguM3Y4LjNoNy4zYy42MjEgMCAxLS41MiAxLTF6bS05LjctOS43aC03LjNjLS40NzggMC0xIC4zNzktMSAxdjcuM2g4LjN6bTEuNCAwdjguM2g4LjN2LTcuM2MwLS40NzgtLjM3OS0xLTEtMXoiIGZpbGwtcnVsZT0ibm9uemVybyIvPjwvc3ZnPg==" width="30" height= "30">
+<h4>Windows</h4>
+<p>一个网站调查问卷：</p>
+<form action="ok.php" method="post">
+姓名：<input type="text" name="name"><br>
+性别：<input type="radio"name="sex"value="male">男
+	<input type="radio"name="sex"value="female">女
+	<input type="radio"name="sex"value="no">不愿透露<br><br>
+你来自哪里？"目前只支持中山用户"
+<select name="provine">
+	<option value="zs">中山</option>
+</select><br><br>
+请留下宝贵意见：<br>
+<textarea rows="8" cols="50 name="comments"></textarea><br><br>
+<input type="submit" value="提交">
+<input type="reset" value="重置">
+
+</body>
+</html>

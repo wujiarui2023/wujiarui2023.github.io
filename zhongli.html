@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        *{
+            padding: 0;
+            margin: 0;
+
+        }
+        body{
+            overflow: hidden;
+            background-color: rgb(5, 7, 24);
+        }
+        #canvas{
+            position: fixed;
+            top: 0;
+            left: 0;
+           /*  filter: contrast(30); */
+        }
+        .yuan{
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border: 2px solid rgb(11, 147, 211);
+            border-radius: 50%;
+            animation: big 1s linear;
+            box-shadow:inset 0 0 200px rgb(11, 147, 211);
+        }
+        @keyframes big{
+            100%{
+                width: 1000px;
+                height: 1000px;       
+              box-shadow:inset 0 0 0px rgb(11, 147, 211);      
+              border: 2px solid transparent;          
+               /* background-color: rgb(11, 147, 211); */
+            }
+        }
+        h1{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-45%,-50%);
+            font-size: 8vw;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-image: url(img/star.gif);
+            filter: drop-shadow(0 0 60px rgb(0, 132, 255));
+        }
+    </style>
+</head>
+<body id="body">
+    <h1>北极光之夜。</h1>
+    <canvas id="canvas"></canvas>
+    <script>
+        var canvas = document.querySelector("#canvas");
+        var ctx = canvas.getContext("2d");
+        // w为画布宽 ，h为画布高
+        var w=0,h=0;        
+        // 存放小球颜色数组，给点好看的颜色 ╭(●｀∀´●)╯
+         var colour = ["#00BFFF","#00FFFF","#3CB371","#FFFF00","#FF8C00","#7B68EE"];
+         // 存放每个小球的基本信息，位置半径等等...
+        var arr = [];
+        // 小球数量
+        var num = 66;
+
+
+        window.onresize=resizeCanvas;
+        function resizeCanvas(){
+            w=canvas.width = window.innerWidth;
+            h=canvas.height = window.innerHeight;
+            // 窗口大小改变时，arr数组重新初始化
+            arr.length = 0;
+            chushi();
+        }
+        resizeCanvas(); 
+
+        function getRandomArbitrary(min, max) {
+            return Math.random() * (max - min) + min;
+        }  
+      
+     function chushi(){
+        for(let i=0;i<num;i++){
+            arr.push({
+                // x为在画布水平方向位置
+              x:getRandomArbitrary(15,w-15),
+              // y为在画布垂直方向位置
+              y:getRandomArbitrary(-h/2,h/2),
+              // 小球半径
+              r:getRandomArbitrary(5,15),
+              //  小球水平方向移动距离大小
+              dx:getRandomArbitrary(-3,3),
+              //  小球垂直方向移动距离大小
+              dy:0.5,
+              // 随机颜色
+              color: colour[parseInt(Math.random() * (colour.length-1))] 
+/*               color: `rgb(${Math.random() * 255},${Math.random() * 255},${Math.random() * 255})`
+ */            })
+        }
+    }     
+
+        function draw(){
+           for(let i=0;i<arr.length;i++){
+            let circle = arr[i];
+            // 开始绘制
+            ctx.beginPath();
+            // 颜色
+            ctx.fillStyle = circle.color;
+            // 画圆
+            ctx.arc(circle.x,circle.y,circle.r,0,Math.PI*2,false);
+            // 定义阴影 
+            ctx.shadowOffsetx=0;
+            ctx.shadowOffsetY=0;
+            ctx.shadowBlur= 20;
+            ctx.shadowColor = circle.color;
+            // 填充
+            ctx.fill();
+            // 结束绘制
+            ctx.closePath();
+           }
+        }
+
+         function updates(){
+             // 循环数组
+            for(let i=0;i<arr.length;i++){
+                // 如果小球垂直位置+半径+dy+0.3 将要大于屏幕高度，就是小球要超出屏幕底部时
+                 if(arr[i].y + arr[i].r + arr[i].dy + 0.3>=h){
+                     // 垂直移动距离大小变负数，这样小球会往反方向移动
+                     arr[i].dy = -arr[i].dy;
+                     // 同时垂直移动距离大小×0.9，逐渐变小，不能一直动个不停
+                     arr[i].dy *= 0.9;
+                     // 水平方向同上
+                     arr[i].dx *= 0.9;
+                 }else{
+                     // 垂直移动距离大小+0.3，这样可以有加速度效果，0.3是我觉得合适，也可以其它
+                    arr[i].dy += 0.3;
+                 }              
+                // 如果小球水平位置+半径+dx 将要大于屏幕宽度，就是小球要超出屏幕左右侧部时              
+                 if(arr[i].x + arr[i].r + arr[i].dx > w ||  arr[i].x - arr[i].r  <=0){
+                     // 水平移动距离大小变负数，这样小球会往反方向移动
+                    arr[i].dx = -arr[i].dx;                  
+                 }
+                 //小球位置改变
+                arr[i].x += arr[i].dx;
+                arr[i].y += arr[i].dy;
+             
+            }
+        } 
+        
+   
+        chushi();
+        setInterval(function(){
+        ctx.clearRect(0, 0, w , h); 
+             draw();
+              updates(); 
+        },10) 
+
+        var body =document.querySelector("#body");
+        body.addEventListener('click',function(event){     
+            let left = event.clientX,top = event.clientY;
+            console.log(left,top);
+            let yuan = document.createElement('div');
+            yuan.classList.add('yuan');
+            yuan.style.cssText = `left: ${left}px;top: ${top}px; transform: translate(-50%,-50%); `
+            body.appendChild(yuan);
+            setTimeout(function(){
+               body.removeChild(yuan);
+            },999);
+
+            for(let i=0;i<arr.length;i++){
+                if(arr[i].y - arr[i].r>=0){ 
+                arr[i].dy = getRandomArbitrary(-10,-5);
+                arr[i].dx=getRandomArbitrary(-3,3);
+                }
+            }
+        })
+
+    </script>
+</body>
+</html>

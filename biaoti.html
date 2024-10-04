@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+  <title>动态修改网页标题</title>
+  <link href="style2.css" rel="stylesheet" type="text/css" media="screen" />
+  <link href="style1.css" rel="stylesheet" type="text/css" media="screen" />
+  <script>
+    function changeTitle() {
+      var newTitle = prompt("请输入新的标题：");
+	  if(newTitle=="ABCDEFGhijklmn")
+	  {
+	  document.title = "纪念吴佳瑞";
+	  }
+	  else
+	  {
+	  document.title = newTitle;
+	  }
+    }
+	    var title;  // 用于临时存放原来的title内容
+    window.onblur = function(){
+      // onblur时先存下原来的title,再更改title内容
+      title = document.title;
+      document.title = "那人貌似走了ヽ(ー_ー)ノ";
+    };
+    window.onfocus = function () {
+      // onfocus时原来的title不为空才替换回去
+      // 防止页面还没加载完成且onblur时title=undefined的情况
+      if(title) { 
+        document.title = title;
+      }
+    }
+
+  </script>
+</head>
+<body><center>
+  <h1>动态修改网页标题</h1>
+  <p>点击下面的按钮以改变网页标题：</p>
+  <button onclick="changeTitle()" class="green">改变标题</button></center>
+</body>
+</html>
