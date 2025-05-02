@@ -1,7 +1,26 @@
 # 这是吴佳瑞的网站的备份
+>主站：[点我传送](https://wujiarui.ct.ws/ "吴佳瑞的网站")
 
-> [网站传送门](https://wujiarui2023.github.io/)
-> 
-> [网站留言板&反馈](https://github.com/wujiarui2023/wujiarui2023.github.io/discussions/categories/announcements)
->
-> 
+>备份站：[点我传送](https://wujiarui2023.github.io/ "点我传送")
+
+>反馈：[点我](https://github.com/wujiarui2023/wujiarui2023.github.io/issues "点我反馈")
+# 更新日志
+- 2022.03.15 网站备份
+- 2022.03.16 网站内容更新
+- 2022.03.17 网站内容更新
+- 2024.12.31 整理文件
+- 2025.01.01 网站内容更新
+- 2025.04.20 网站内容更新
+- 2025.04.21 网站内容更新
+- 2025.04.22 网站内容更新
+- 2025.04.23 网站内容更新
+- 2025.04.24 网站内容更新
+- 2025.04.25 网站内容更新
+- 2025.04.26 网站内容更新
+
+# 致谢
+>感谢[LetmixPlayer](https://github.com/LetmixPlayer)提供建议
+
+>Tips:本网站不定时更新
+
+---

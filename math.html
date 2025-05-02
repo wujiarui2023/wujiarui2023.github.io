@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>多功能初中数学计算器</title>
+    <style>
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .navbar {
+                display: flex;
+                overflow: hidden;
+                padding: 10px 0;
+            }
+            .navbar {
+                display: flex;
+                justify-content: space-between;
+                padding: 10px 0;
+                width: 100%;
+                position: relative;
+            }
+            .nav-links {
+                display: flex;
+                overflow: hidden;
+            }
+            .navbar a {
+                flex: 0 0 auto;
+                padding: 10px 15px;
+                font-size: 14px;
+                white-space: nowrap;
+            }
+            .more-menu {
+                position: relative;
+                display: none;
+            }
+            .more-btn {
+                padding: 0;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background-color: rgba(255,255,255,0.1);
+                transition: all 0.3s ease;
+                border: none;
+                outline: none;
+            }
+            .more-btn:hover {
+                background-color: rgba(255,255,255,0.2);
+                transform: scale(1.1);
+            }
+            .more-btn svg {
+                width: 24px;
+                height: 24px;
+                fill: white;
+            }
+            .dropdown-content {
+                display: none;
+                position: absolute;
+                right: 0;
+                top: calc(100% + 5px);
+                background-color: #0066cc;
+                min-width: 180px;
+                border-radius: 5px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1100;
+                opacity: 0;
+                transform: translateY(-10px);
+                transition: all 0.3s ease;
+            }
+            .dropdown-content.show {
+                display: block;
+                opacity: 1;
+                transform: translateY(0);
+            }
+            .dropdown-content a {
+                color: white;
+                padding: 12px 20px;
+                text-decoration: none;
+                display: block;
+                text-align: left;
+                transition: background-color 0.2s;
+                border-radius: 3px;
+            }
+            .dropdown-content a:hover {
+                background-color: #0052a3;
+            }
+            @media (max-width: 1200px) {
+                .more-menu {
+                    display: block;
+                }
+            }
+            .navbar a:hover {
+                overflow: visible;
+                white-space: normal;
+                max-width: none;
+                background-color: rgba(255,255,255,0.2);
+                z-index: 1001;
+            }
+            .calculator {
+                width: 90%;
+                margin: 20px auto;
+                padding: 15px;
+            }
+            input[type="number"], select {
+                width: 80px;
+            }
+        }
+        @media (max-width: 480px) {
+            .navbar a {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            .calculator {
+                padding: 10px;
+            }
+            h1, h2, h3 {
+                font-size: 1.2em;
+            }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        body {
+            animation: fadeIn 0.5s ease-in forwards;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        .hidden {
+            display: none;
+        }
+        .home-content {
+            margin-top: 80px; /* 与计算器板块保持一致 */
+        }
+            .navbar {
+                background: linear-gradient(135deg, #0066cc 0%, #004d99 100%);
+                overflow: visible;
+                position: fixed;
+                top: 0;
+                width: 100%;
+                z-index: 1000;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+        .navbar a {
+            float: left;
+            display: block;
+            color: #fff;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .navbar a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .calculator {
+            border: none;
+            padding: 25px;
+            margin-bottom: 25px;
+            background-color: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            margin-top: 80px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .calculator:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        .calculator h2, .calculator h3 {
+            margin-top: 0;
+        }
+        .calculator input[type="number"] {
+            width: 100px;
+            padding: 5px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .calculator select {
+            width: 120px;
+            padding: 5px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .calculator button {
+            padding: 8px 16px;
+            margin: 8px;
+            border: none;
+            background: linear-gradient(135deg, #007bff 0%, #0066cc 100%);
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .calculator button:hover {
+            background: linear-gradient(135deg, #0066cc 0%, #0052a3 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .result {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .description {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .feature-card {
+            padding: 15px;
+            background: rgba(0, 102, 204, 0.1);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .feature-card h3 {
+            color: #0066cc;
+            margin-top: 0;
+        }
+        .quick-start {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        .quick-start ol {
+            padding-left: 20px;
+        }
+    </style>
+    <style>
+        .circle-display {
+            display: none;
+            margin: 20px auto;
+            position: relative;
+        }
+        .circle-base {
+            fill: #4CAF50;
+            transition: opacity 0.3s ease;
+        }
+        .circle-highlight {
+            fill: transparent;
+            stroke: #000;
+            stroke-width: 2;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .circle-dimmed {
+            opacity: 0.3;
+        }
+        .dim-all {
+            opacity: 0.3;
+        }
+        .circle-label {
+            position: absolute;
+            color: white;
+            font-size: 12px;
+            background-color: rgba(0,0,0,0.5);
+            padding: 2px 5px;
+            border-radius: 3px;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+        .circle-label:hover {
+            background-color: rgba(0,0,0,0.8);
+            transform: scale(1.1);
+        }
+        .radius-line {
+            position: absolute;
+            height: 1px;
+            background-color: white;
+            transform-origin: 0 0;
+            z-index: 5;
+            transition: all 0.3s ease;
+        }
+        .connector-line {
+            position: absolute;
+            height: 1px;
+            background-color: rgba(0,0,0,0.5);
+            transform-origin: 0 0;
+            z-index: 5;
+            transition: all 0.3s ease;
+        }
+        .highlight {
+            background-color: rgba(255,255,255,0.8) !important;
+            height: 2px !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-links">
+            <a href="#home">首页</a>
+            <a href="#basic">基本算术运算</a>
+            <a href="#circle">圆的计算</a>
+            <a href="#sphere">球体的体积</a>
+            <a href="#cylinder">圆柱体的体积</a>
+            <a href="#trigonometry">三角函数</a>
+            <a href="#quadratic">一元二次方程</a>
+            <a href="#area">面积计算</a>
+            <a href="#linear">线性方程</a>
+            <a href="#rational">有理数判定</a>
+            <a href="#irrational">无理数判定</a>
+            <a href="#percentage">百分比计算</a>
+            <a href="#lever">杠杆原理实验</a>
+            <a href="#pigeonhole">鸽巢原理</a>
+        </div>
+        <div class="more-menu">
+            <button class="more-btn">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>
+            </button>
+            <div class="dropdown-content"></div>
+        </div>
+    </div>
+
+    <div class="calculator" id="home">
+        <div class="home-content">
+            <h1>欢迎使用多功能数学计算器</h1>
+            <div class="feature-list">
+                <div class="feature-card">
+                    <h3>基本运算</h3>
+                    <p>加减乘除等基础数学运算</p>
+                </div>
+                <div class="feature-card">
+                    <h3>几何计算</h3>
+                    <p>圆、球体、圆柱体等几何图形计算</p>
+                </div>
+                <div class="feature-card">
+                    <h3>方程求解</h3>
+                    <p>一元二次方程、线性方程求解</p>
+                </div>
+                <div class="feature-card">
+                    <h3>实用工具</h3>
+                    <p>百分比计算、杠杆原理等实用工具</p>
+                </div>
+            </div>
+            <div class="quick-start">
+                <h2>快速开始</h2>
+                <ol>
+                    <li>点击上方导航栏选择需要的功能</li>
+                    <li>输入相关参数</li>
+                    <li>点击"计算"按钮获取结果</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <div class="calculator hidden" id="basic">
+        <h2>基本算术运算</h2>
+        <input type="number" id="num1" placeholder="输入第一个数字">
+        <select id="operation">
+            <option value="add">加法</option>
+            <option value="subtract">减法</option>
+            <option value="multiply">乘法</option>
+            <option value="divide">除法</option>
+        </select>
+        <input type="number" id="num2" placeholder="输入第二个数字">
+        <button onclick="calculate()">计算</button>
+        <div class="result" id="result"></div>
+    </div>
+
+    <div class="calculator" id="circle">
+        <h2>圆的计算</h2>
+        <input type="number" id="radius" placeholder="输入半径">
+        <button onclick="areaOfCircle()">计算面积</button>
+        <div class="result" id="circleArea"></div>
+        <button onclick="circumferenceOfCircle()">计算周长</button>
+        <div class="result" id="circleCircumferenceResult"></div>
+        <div class="circle-display" id="circleDisplay"></div>
+    </div>
+
+    <div class="calculator" id="sphere">
+        <h2>体积计算 - 球体</h2>
+        <input type="number" id="sphereRadius" placeholder="输入半径">
+        <button onclick="volumeOfSphere()">计算体积</button>
+        <div class="result" id="sphereVolume"></div>
+    </div>
+
+    <div class="calculator" id="quadratic">
+        <h2>求解一元二次方程 ax^2 + bx + c = 0</h2>
+        <input type="number" id="a" placeholder="输入a的值">
+        <input type="number" id="b" placeholder="输入b的值">
+        <input type="number" id="c" placeholder="输入c的值">
+        <button onclick="solveQuadratic()">求解</button>
+        <div class="result" id="quadraticResult"></div>
+    </div>
+
+    <div class="calculator" id="area">
+        <h2>面积计算</h2>
+        <div>
+            <h3>矩形的面积</h3>
+            <input type="number" id="rectangleLength" placeholder="输入长度">
+            <input type="number" id="rectangleWidth" placeholder="输入宽度">
+            <button onclick="areaOfRectangle()">计算面积</button>
+            <div class="result" id="rectangleArea"></div>
+        </div>
+        <div>
+            <h3>平行四边形的面积</h3>
+            <input type="number" id="parallelogramBase" placeholder="输入底边">
+            <input type="number" id="parallelogramHeight" placeholder="输入高">
+            <button onclick="areaOfParallelogram()">计算面积</button>
+            <div class="result" id="parallelogramArea"></div>
+        </div>
+        <div>
+            <h3>梯形的面积</h3>
+            <input type="number" id="trapezoidBase1" placeholder="输入上底">
+            <input type="number" id="trapezoidBase2" placeholder="输入下底">
+            <input type="number" id="trapezoidHeight" placeholder="输入高">
+            <button onclick="areaOfTrapezoid()">计算面积</button>
+            <div class="result" id="trapezoidArea"></div>
+        </div>
+        <div>
+            <h3>三角形的面积</h3>
+            <input type="number" id="triangleBase" placeholder="输入底边">
+            <input type="number" id="triangleHeight" placeholder="输入高">
+            <button onclick="areaOfTriangle()">计算面积</button>
+            <div class="result" id="triangleArea"></div>
+        </div>
+    </div>
+
+    <div class="calculator" id="linear">
+        <h2>求解线性方程 ax + b = 0</h2>
+        <input type="number" id="linearA" placeholder="输入a的值">
+        <input type="number" id="linearB" placeholder="输入b的值">
+        <button onclick="solveLinear()">求解</button>
+        <div class="result" id="linearResult"></div>
+    </div>
+
+    <div class="calculator" id="rational">
+        <h2>有理数判定</h2>
+        <input type="number" id="rationalInput" placeholder="输入数字">
+        <button onclick="checkRational()">判定</button>
+        <div class="result" id="rationalResult"></div>
+    </div>
+
+    <div class="calculator" id="irrational">
+        <h2>无理数判定</h2>
+        <input type="number" id="irrationalInput" placeholder="输入数字">
+        <button onclick="checkIrrational()">判定</button>
+        <div class="result" id="irrationalResult"></div>
+    </div>
+
+    <div class="calculator" id="lever">
+        <h2>杠杆原理实验</h2>
+        <div class="description">输入力和距离，计算力矩。</div>
+        <input type="number" id="force1" placeholder="输入力1">
+        <input type="number" id="distance1" placeholder="输入距离1">
+        <input type="number" id="force2" placeholder="输入力2">
+        <input type="number" id="distance2" placeholder="输入距离2">
+        <button onclick="calculateLever()">计算</button>
+        <div class="result" id="leverResult"></div>
+    </div>
+
+    <div class="calculator" id="pigeonhole">
+        <h2>鸽巢原理</h2>
+        <div class="description">输入物品数量和容器数量，判断是否至少有一个容器中有多个物品。</div>
+        <input type="number" id="items" placeholder="输入物品数量">
+        <input type="number" id="containers" placeholder="输入容器数量">
+        <button onclick="checkPigeonhole()">判断</button>
+        <div class="result" id="pigeonholeResult"></div>
+    </div>
+
+    <div class="calculator" id="percentage">
+        <h2>百分比计算</h2>
+        <div>
+            <h3>计算一个数是另一个数的百分之几</h3>
+            <input type="number" id="part" placeholder="输入部分">
+            <input type="number" id="whole" placeholder="输入整体">
+            <button onclick="calculatePercentage()">计算百分比</button>
+            <div class="result" id="percentageResult"></div>
+        </div>
+        <div>
+            <h3>计算一个数的百分之几是多少</h3>
+            <input type="number" id="number" placeholder="输入数字">
+            <input type="number" id="percent" placeholder="输入百分比">
+            <button onclick="calculateValueFromPercentage()">计算结果</button>
+            <div class="result" id="valueFromPercentageResult"></div>
+        </div>
+        <div>
+            <h3>计算增加/减少百分比</h3>
+            <input type="number" id="originalValue" placeholder="输入原值">
+            <input type="number" id="newValue" placeholder="输入新值">
+            <button onclick="calculateChangePercentage()">计算变化百分比</button>
+            <div class="result" id="changePercentageResult"></div>
+        </div>
+    </div>
+
+    <div class="calculator" id="cylinder">
+        <h2>体积计算 - 圆柱体</h2>
+        <input type="number" id="cylinderRadius" placeholder="输入半径">
+        <input type="number" id="cylinderHeight" placeholder="输入高度">
+        <button onclick="volumeOfCylinder()">计算体积</button>
+        <div class="result" id="cylinderVolume"></div>
+    </div>
+
+    <div class="calculator" id="trigonometry">
+        <h2>三角函数计算</h2>
+        <input type="number" id="angle" placeholder="输入角度(0-360)">
+        <button onclick="calculateSin()">计算正弦</button>
+        <button onclick="calculateCos()">计算余弦</button>
+        <button onclick="calculateTan()">计算正切</button>
+        <div class="result" id="trigResult"></div>
+    </div>
+
+    <script>
+        // 显示指定部分，隐藏其他部分
+        function showSection(sectionId) {
+            // 隐藏所有计算器
+            document.querySelectorAll('.calculator').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // 显示选中的部分
+            const section = document.getElementById(sectionId);
+            if(section) {
+                section.classList.remove('hidden');
+            }
+            
+            // 特殊处理首页显示
+            if(sectionId === 'home') {
+                document.querySelector('.home-content').style.display = 'block';
+            }
+        }
+
+        // 为导航链接添加点击事件
+        document.querySelectorAll('.navbar a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = this.getAttribute('href').substring(1);
+                showSection(target);
+            });
+        });
+
+        // 页面加载时显示首页
+        window.onload = function() {
+            document.querySelector('.home-content').style.display = 'block';
+            showSection('home');
+            adjustNavbar();
+        };
+
+        function adjustNavbar() {
+            const nav = document.querySelector('.navbar');
+            const navLinks = document.querySelector('.nav-links');
+            const moreMenu = document.querySelector('.more-menu');
+            const dropdown = document.querySelector('.dropdown-content');
+            
+            // 先恢复所有链接的显示
+            document.querySelectorAll('.nav-links a').forEach(link => {
+                link.style.display = '';
+            });
+            
+            // 清空下拉菜单
+            dropdown.innerHTML = '';
+            
+            // 检查是否需要折叠
+            if (navLinks.scrollWidth > navLinks.offsetWidth) {
+                moreMenu.style.display = 'block';
+                
+                // 移动超出部分的链接到下拉菜单
+                const links = Array.from(document.querySelectorAll('.nav-links a'));
+                let totalWidth = 0;
+                const availableWidth = nav.offsetWidth - moreMenu.offsetWidth - 30;
+                let needDropdown = false;
+                
+                for (let i = 0; i < links.length; i++) {
+                    const link = links[i];
+                    totalWidth += link.offsetWidth;
+                    
+                    if (totalWidth > availableWidth) {
+                        const clone = link.cloneNode(true);
+                        dropdown.appendChild(clone);
+                        link.style.display = 'none';
+                        needDropdown = true;
+                    }
+                }
+                
+                // 根据是否需要下拉菜单来显示/隐藏更多按钮
+                moreMenu.style.display = needDropdown ? 'block' : 'none';
+            } else {
+                moreMenu.style.display = 'none';
+            }
+        }
+
+        // 窗口大小改变时重新调整导航栏
+        window.addEventListener('resize', adjustNavbar);
+
+        // 点击更多按钮显示/隐藏下拉菜单
+        document.querySelector('.more-btn').addEventListener('click', function() {
+            const dropdown = document.querySelector('.dropdown-content');
+            dropdown.classList.toggle('show');
+        });
+
+        // 点击其他地方关闭下拉菜单
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.more-menu')) {
+                document.querySelector('.dropdown-content').classList.remove('show');
+            }
+        });
+
+        function calculate() {
+            const num1 = parseFloat(document.getElementById('num1').value);
+            const num2 = parseFloat(document.getElementById('num2').value);
+            const operation = document.getElementById('operation').value;
+            let result;
+
+            switch(operation) {
+                case 'add':
+                    result = num1 + num2;
+                    break;
+                case 'subtract':
+                    result = num1 - num2;
+                    break;
+                case 'multiply':
+                    result = num1 * num2;
+                    break;
+                case 'divide':
+                    result = (num2 === 0) ? "除数不能为零" : num1 / num2;
+                    break;
+                default:
+                    result = "未选择操作";
+            }
+
+            document.getElementById('result').innerText = `结果: ${result}`;
+        }
+
+        function areaOfCircle() {
+            const radius = parseFloat(document.getElementById('radius').value);
+            const area = Math.PI * Math.pow(radius, 2);
+            const circumference = 2 * Math.PI * radius;
+            document.getElementById('circleArea').innerText = `圆的面积: ${area.toFixed(2)}`;
+            
+            // 显示圆形和标注
+            const circleDisplay = document.getElementById('circleDisplay');
+            const size = radius * 10;
+            circleDisplay.style.width = `${size}px`;
+            circleDisplay.style.height = `${size}px`;
+            circleDisplay.style.display = 'block';
+            
+            // 清除旧标注
+            circleDisplay.innerHTML = '';
+            
+            // 创建SVG圆
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            
+            // 基础圆
+            const baseCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            baseCircle.setAttribute('cx', '50%');
+            baseCircle.setAttribute('cy', '50%');
+            baseCircle.setAttribute('r', '50%');
+            baseCircle.setAttribute('fill', '#4CAF50');
+            baseCircle.setAttribute('class', 'circle-base');
+            svg.appendChild(baseCircle);
+            
+            // 高亮部分 - 周长
+            const circumferenceHighlight = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circumferenceHighlight.setAttribute('cx', '50%');
+            circumferenceHighlight.setAttribute('cy', '50%');
+            circumferenceHighlight.setAttribute('r', '50%');
+            circumferenceHighlight.setAttribute('fill', 'transparent');
+            circumferenceHighlight.setAttribute('stroke', '#000');
+            circumferenceHighlight.setAttribute('stroke-width', '2');
+            circumferenceHighlight.setAttribute('class', 'circle-highlight');
+            circumferenceHighlight.id = 'circumference-highlight';
+            svg.appendChild(circumferenceHighlight);
+            
+            // 高亮部分 - 半径
+            const radiusHighlight = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            radiusHighlight.setAttribute('x1', '50%');
+            radiusHighlight.setAttribute('y1', '50%');
+            radiusHighlight.setAttribute('x2', '50%');
+            radiusHighlight.setAttribute('y2', '0%');
+            radiusHighlight.setAttribute('stroke', '#000');
+            radiusHighlight.setAttribute('stroke-width', '2');
+            radiusHighlight.setAttribute('class', 'circle-highlight');
+            radiusHighlight.id = 'radius-highlight';
+            svg.appendChild(radiusHighlight);
+            
+            // 高亮部分 - 直径
+            const diameterHighlight = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            diameterHighlight.setAttribute('x1', '50%');
+            diameterHighlight.setAttribute('y1', '0%');
+            diameterHighlight.setAttribute('x2', '50%');
+            diameterHighlight.setAttribute('y2', '100%');
+            diameterHighlight.setAttribute('stroke', '#000');
+            diameterHighlight.setAttribute('stroke-width', '2');
+            diameterHighlight.setAttribute('class', 'circle-highlight');
+            diameterHighlight.id = 'diameter-highlight';
+            svg.appendChild(diameterHighlight);
+            
+            circleDisplay.appendChild(svg);
+            
+            // 添加标注 - 均匀分布在圆周上
+            const centerX = size/2;
+            const centerY = size/2;
+            const labelRadius = size/2 * 1.5; // 标注位置半径
+            
+            // 计算圆周上的四个点
+            const positions = [
+                { angle: Math.PI/4, text: `半径: ${radius.toFixed(2)}`, highlightId: 'radius-highlight' },
+                { angle: 3*Math.PI/4, text: `直径: ${(radius*2).toFixed(2)}`, highlightId: 'diameter-highlight' },
+                { angle: 5*Math.PI/4, text: `周长: ${circumference.toFixed(2)}`, highlightId: 'circumference-highlight' },
+                { angle: 7*Math.PI/4, text: `面积: ${area.toFixed(2)}`, highlightId: '' }
+            ];
+            
+            positions.forEach(pos => {
+                const x = centerX + Math.cos(pos.angle) * labelRadius;
+                const y = centerY + Math.sin(pos.angle) * labelRadius;
+                addCircleLabel(circleDisplay, pos.text, x, y, centerX, centerY, pos.highlightId);
+            });
+        }
+
+        function circumferenceOfCircle() {
+            const radius = parseFloat(document.getElementById('radius').value);
+            const circumference = 2 * Math.PI * radius;
+            const area = Math.PI * Math.pow(radius, 2);
+            document.getElementById('circleCircumferenceResult').innerText = `圆的周长: ${circumference.toFixed(2)}`;
+            
+            // 显示圆形和标注
+            const circleDisplay = document.getElementById('circleDisplay');
+            const size = radius * 10;
+            circleDisplay.style.width = `${size}px`;
+            circleDisplay.style.height = `${size}px`;
+            circleDisplay.style.display = 'block';
+            
+            // 清除旧标注
+            circleDisplay.innerHTML = '';
+            
+            // 添加标注 - 均匀分布在圆周上
+            const centerX = size/2;
+            const centerY = size/2;
+            const labelRadius = size/2 * 1.2; // 标注位置半径
+            
+            // 计算圆周上的四个点
+            const positions = [
+                { angle: Math.PI/4, text: `半径: ${radius.toFixed(2)}` },
+                { angle: 3*Math.PI/4, text: `直径: ${(radius*2).toFixed(2)}` },
+                { angle: 5*Math.PI/4, text: `周长: ${circumference.toFixed(2)}` },
+                { angle: 7*Math.PI/4, text: `面积: ${area.toFixed(2)}` }
+            ];
+            
+            positions.forEach(pos => {
+                const x = centerX + Math.cos(pos.angle) * labelRadius;
+                const y = centerY + Math.sin(pos.angle) * labelRadius;
+                addCircleLabel(circleDisplay, pos.text, x, y, centerX, centerY);
+            });
+            
+            // 添加半径线
+            addRadiusLine(circleDisplay, centerX, centerY, centerX, centerY - size/2);
+        }
+        
+        function addCircleLabel(circle, text, x, y, cx, cy, highlightId) {
+            const label = document.createElement('div');
+            label.className = 'circle-label';
+            label.textContent = text;
+            label.style.left = `${x}px`;
+            label.style.top = `${y}px`;
+            
+            // 添加悬停效果
+            label.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = 'rgba(0,0,0,0.8)';
+                
+                // 高亮对应的部分
+                if(highlightId) {
+                    const highlightElement = document.getElementById(highlightId);
+                    if(highlightElement) {
+                        highlightElement.style.opacity = '1';
+                    }
+                    // 只有有高亮部分时才变淡其他部分
+                    const svg = circle.querySelector('svg');
+                    svg.classList.add('dim-all');
+                    highlightElement.classList.remove('dim-all');
+                }
+            });
+            
+            label.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                
+                // 取消高亮
+                const highlights = circle.querySelectorAll('.circle-highlight');
+                highlights.forEach(el => el.style.opacity = '0');
+                
+                // 恢复其他部分
+                if(highlightId) {
+                    const svg = circle.querySelector('svg');
+                    svg.classList.remove('dim-all');
+                }
+            });
+            
+            circle.appendChild(label);
+
+            // 添加连接线
+            if(cx !== undefined && cy !== undefined) {
+                const line = document.createElement('div');
+                line.className = 'connector-line';
+                const length = Math.sqrt(Math.pow(x-cx, 2) + Math.pow(y-cy, 2));
+                line.style.width = `${length}px`;
+                line.style.left = `${cx}px`;
+                line.style.top = `${cy}px`;
+                line.style.transform = `rotate(${Math.atan2(y-cy, x-cx)}rad)`;
+                circle.appendChild(line);
+            }
+        }
+        
+        function addRadiusLine(circle, x1, y1, x2, y2) {
+            const line = document.createElement('div');
+            line.className = 'radius-line';
+            const length = Math.sqrt(Math.pow(x2-x1, 2) + Math.pow(y2-y1, 2));
+            line.style.width = `${length}px`;
+            line.style.left = `${x1}px`;
+            line.style.top = `${y1}px`;
+            line.style.transform = `rotate(${Math.atan2(y2-y1, x2-x1)}rad)`;
+            circle.appendChild(line);
+        }
+
+        function volumeOfSphere() {
+            const radius = parseFloat(document.getElementById('sphereRadius').value);
+            const volume = (4/3) * Math.PI * Math.pow(radius, 3);
+            document.getElementById('sphereVolume').innerText = `球体的体积: ${volume.toFixed(2)}`;
+        }
+
+        function solveQuadratic() {
+            const a = parseFloat(document.getElementById('a').value);
+            const b = parseFloat(document.getElementById('b').value);
+            const c = parseFloat(document.getElementById('c').value);
+            let result;
+
+            if (a === 0) {
+                result = "a不能为零，不是一元二次方程";
+            } else {
+                const discriminant = b ** 2 - 4 * a * c;
+                if (discriminant < 0) {
+                    result = "无实数解";
+                } else if (discriminant === 0) {
+                    result = -b / (2 * a);
+                } else {
+                    const x1 = (-b + Math.sqrt(discriminant)) / (2 * a);
+                    const x2 = (-b - Math.sqrt(discriminant)) / (2 * a);
+                    result = `解: x1 = ${x1.toFixed(2)}, x2 = ${x2.toFixed(2)}`;
+                }
+            }
+
+            document.getElementById('quadraticResult').innerText = result;
+        }
+
+        function areaOfRectangle() {
+            const length = parseFloat(document.getElementById('rectangleLength').value);
+            const width = parseFloat(document.getElementById('rectangleWidth').value);
+            const area = length * width;
+            document.getElementById('rectangleArea').innerText = `矩形的面积: ${area.toFixed(2)}`;
+        }
+
+        function areaOfParallelogram() {
+            const base = parseFloat(document.getElementById('parallelogramBase').value);
+            const height = parseFloat(document.getElementById('parallelogramHeight').value);
+            const area = base * height;
+            document.getElementById('parallelogramArea').innerText = `平行四边形的面积: ${area.toFixed(2)}`;
+        }
+
+        function areaOfTrapezoid() {
+            const base1 = parseFloat(document.getElementById('trapezoidBase1').value);
+            const base2 = parseFloat(document.getElementById('trapezoidBase2').value);
+            const height = parseFloat(document.getElementById('trapezoidHeight').value);
+            const area = (base1 + base2) * height / 2;
+            document.getElementById('trapezoidArea').innerText = `梯形的面积: ${area.toFixed(2)}`;
+        }
+
+        function areaOfTriangle() {
+            const base = parseFloat(document.getElementById('triangleBase').value);
+            const height = parseFloat(document.getElementById('triangleHeight').value);
+            const area = 0.5 * base * height;
+            document.getElementById('triangleArea').innerText = `三角形的面积: ${area.toFixed(2)}`;
+        }
+
+        function solveLinear() {
+            const a = parseFloat(document.getElementById('linearA').value);
+            const b = parseFloat(document.getElementById('linearB').value);
+            let result;
+
+            if (a === 0) {
+                result = "a不能为零，不是线性方程";
+            } else {
+                result = -b / a;
+            }
+
+            document.getElementById('linearResult').innerText = `方程的解: x = ${result.toFixed(2)}`;
+        }
+
+        function checkRational() {
+            const input = parseFloat(document.getElementById('rationalInput').value);
+            if (isNaN(input)) {
+                document.getElementById('rationalResult').innerText = "请输入有效的数字";
+                return;
+            }
+            // 有理数判定：如果数字可以表示为两个整数的比值，则为有理数
+            // 这里简单地判定输入是否为整数或小数点后有限位数
+            if (Number.isFinite(input) && !isNaN(input)) {
+                document.getElementById('rationalResult').innerText = "输入的是有理数";
+            } else {
+                document.getElementById('rationalResult').innerText = "输入的不是有理数";
+            }
+        }
+
+        function checkIrrational() {
+            const input = parseFloat(document.getElementById('irrationalInput').value);
+            if (isNaN(input)) {
+                document.getElementById('irrationalResult').innerText = "请输入有效的数字";
+                return;
+            }
+            // 无理数判定：这里简单地判定输入是否为常见的无理数
+            const commonIrrationals = [Math.PI, Math.E, Math.SQRT2];
+            if (commonIrrationals.includes(input)) {
+                document.getElementById('irrationalResult').innerText = "输入的是无理数";
+            } else {
+                document.getElementById('irrationalResult').innerText = "输入的不是无理数";
+            }
+        }
+
+        function calculateLever() {
+            const force1 = parseFloat(document.getElementById('force1').value);
+            const distance1 = parseFloat(document.getElementById('distance1').value);
+            const force2 = parseFloat(document.getElementById('force2').value);
+            const distance2 = parseFloat(document.getElementById('distance2').value);
+
+            if (isNaN(force1) || isNaN(distance1) || isNaN(force2) || isNaN(distance2)) {
+                document.getElementById('leverResult').innerText = "请输入有效的数字";
+                return;
+            }
+
+            const moment1 = force1 * distance1;
+            const moment2 = force2 * distance2;
+
+            let result;
+            if (moment1 > moment2) {
+                result = `力1的力矩更大: ${moment1.toFixed(2)} > ${moment2.toFixed(2)}`;
+            } else if (moment1 < moment2) {
+                result = `力2的力矩更大: ${moment1.toFixed(2)} < ${moment2.toFixed(2)}`;
+            } else {
+                result = `两个力矩相等: ${moment1.toFixed(2)} = ${moment2.toFixed(2)}`;
+            }
+
+            document.getElementById('leverResult').innerText = result;
+        }
+
+        function calculateSin() {
+            const angle = parseFloat(document.getElementById('angle').value);
+            if (isNaN(angle) || angle < 0 || angle > 360) {
+                document.getElementById('trigResult').innerText = "请输入0-360之间的有效角度";
+                return;
+            }
+            const radians = angle * Math.PI / 180;
+            const sinValue = Math.sin(radians);
+            document.getElementById('trigResult').innerText = `sin(${angle}°) = ${sinValue.toFixed(2)}`;
+        }
+
+        function calculateCos() {
+            const angle = parseFloat(document.getElementById('angle').value);
+            if (isNaN(angle) || angle < 0 || angle > 360) {
+                document.getElementById('trigResult').innerText = "请输入0-360之间的有效角度";
+                return;
+            }
+            const radians = angle * Math.PI / 180;
+            const cosValue = Math.cos(radians);
+            document.getElementById('trigResult').innerText = `cos(${angle}°) = ${cosValue.toFixed(2)}`;
+        }
+
+        function calculateTan() {
+            const angle = parseFloat(document.getElementById('angle').value);
+            if (isNaN(angle) || angle < 0 || angle > 360) {
+                document.getElementById('trigResult').innerText = "请输入0-360之间的有效角度";
+                return;
+            }
+            const radians = angle * Math.PI / 180;
+            const tanValue = Math.tan(radians);
+            document.getElementById('trigResult').innerText = `tan(${angle}°) = ${tanValue.toFixed(2)}`;
+        }
+
+        function calculatePercentage() {
+            const part = parseFloat(document.getElementById('part').value);
+            const whole = parseFloat(document.getElementById('whole').value);
+            
+            if (isNaN(part) || isNaN(whole) || whole === 0) {
+                document.getElementById('percentageResult').innerText = "请输入有效的数字(整体不能为零)";
+                return;
+            }
+
+            const percentage = (part / whole) * 100;
+            document.getElementById('percentageResult').innerText = `${part}是${whole}的${percentage.toFixed(2)}%`;
+        }
+
+        function calculateValueFromPercentage() {
+            const number = parseFloat(document.getElementById('number').value);
+            const percent = parseFloat(document.getElementById('percent').value);
+            
+            if (isNaN(number) || isNaN(percent)) {
+                document.getElementById('valueFromPercentageResult').innerText = "请输入有效的数字";
+                return;
+            }
+
+            const value = number * percent / 100;
+            document.getElementById('valueFromPercentageResult').innerText = `${number}的${percent}%是${value.toFixed(2)}`;
+        }
+
+        function calculateChangePercentage() {
+            const original = parseFloat(document.getElementById('originalValue').value);
+            const newValue = parseFloat(document.getElementById('newValue').value);
+            
+            if (isNaN(original) || isNaN(newValue) || original === 0) {
+                document.getElementById('changePercentageResult').innerText = "请输入有效的数字(原值不能为零)";
+                return;
+            }
+
+            const change = ((newValue - original) / original) * 100;
+            const changeType = change >= 0 ? "增加" : "减少";
+            document.getElementById('changePercentageResult').innerText = 
+                `从${original}到${newValue}，${changeType}了${Math.abs(change).toFixed(2)}%`;
+        }
+
+        function volumeOfCylinder() {
+            const radius = parseFloat(document.getElementById('cylinderRadius').value);
+            const height = parseFloat(document.getElementById('cylinderHeight').value);
+            
+            if (isNaN(radius) || isNaN(height) || radius <= 0 || height <= 0) {
+                document.getElementById('cylinderVolume').innerText = "请输入有效的正数";
+                return;
+            }
+
+            const volume = Math.PI * Math.pow(radius, 2) * height;
+            document.getElementById('cylinderVolume').innerText = `圆柱体的体积: ${volume.toFixed(2)}`;
+        }
+
+        function checkPigeonhole() {
+            const items = parseInt(document.getElementById('items').value);
+            const containers = parseInt(document.getElementById('containers').value);
+
+            if (isNaN(items) || isNaN(containers) || items <= 0 || containers <= 0) {
+                document.getElementById('pigeonholeResult').innerText = "请输入有效的正整数";
+                return;
+            }
+
+            if (items > containers) {
+                const quotient = Math.floor(items / containers);
+                const remainder = items % containers;
+                const minItemsPerContainer = remainder > 0 ? quotient + 1 : quotient;
+                
+                document.getElementById('pigeonholeResult').innerHTML = `
+                    根据鸽巢原理：<br>
+                    物品数量：${items}<br>
+                    容器数量：${containers}<br>
+                    计算过程：${items} ÷ ${containers} = ${quotient}...${remainder}<br>
+                    计算结果：至少有一个容器中最少有${minItemsPerContainer}个物品<br>
+                    计算公式：${items} ÷ ${containers} = ${quotient}余${remainder} → 最少${minItemsPerContainer}个
+                `;
+            } else {
+                document.getElementById('pigeonholeResult').innerHTML = `
+                    根据鸽巢原理：<br>
+                    物品数量：${items}<br>
+                    容器数量：${containers}<br>
+                    计算过程：${items} ÷ ${containers} = 0...${items}<br>
+                    计算结果：每个容器中最多有1个物品
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
