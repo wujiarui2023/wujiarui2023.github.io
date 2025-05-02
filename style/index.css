@@ -1,0 +1,132 @@
+html, body{
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .container{
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .active {
+      background-color: #4CAF50;
+  }
+          /* 加上 -webkit- 注意兼容 */
+          h1 {
+              background: -webkit-linear-gradient(135deg,
+                      #0eaf6d,
+                      #ff6ac6 25%,
+                      #147b96 50%,
+                      #e6d205 55%,
+                      #2cc4e0 60%,
+                      #8b2ce0 80%,
+                      #ff6384 95%,
+                      #08dfb4);
+              /* 文字颜色填充设置为透明 */
+              -webkit-text-fill-color: transparent;
+              /* 背景裁剪，即让文字使用背景色 */
+              -webkit-background-clip: text;
+              /* 背景图放大一下，看着柔和一些 */
+              -webkit-background-size: 200% 100%;
+              /* 应用动画flowCss 12秒速度 无限循环 线性匀速动画*/
+              -webkit-animation: flowCss 12s infinite linear;
+              /* 本例12个文字(加标点符号)；有多少个文字，width就是多少个em */
+              width: 15em;
+              /* 加上两个动画，一个是打字动画，使用steps让字一个一个的出现，
+               注意step和字数保持一致，光标动画也是同理，*/
+              animation: typingWords 5s steps(15) infinite, cursor 0.25s steps(1) infinite;
+              /* 要设置不允许换行，且溢出隐藏 */
+              white-space: nowrap;
+              overflow: hidden;
+              /* 使用右边框作为打印的指针光标 */
+              border-right: 1px solid #000;
+          }
+  
+          @-webkit-keyframes flowCss {
+              0% {
+                  /* 移动背景位置 */
+                  background-position: 0 0;
+              }
+  
+              100% {
+                  background-position: -400% 0;
+              }
+          }
+  
+          h1:hover {
+              -webkit-animation: flowCss 4s infinite linear;
+          }
+          @keyframes typingWords {
+              0% {
+                  width: 0;
+              }
+          }
+  a:link {
+          
+              text-decoration:none;
+          }
+          a:visited {
+  
+              text-decoration:none;
+          }
+          a:hover {
+  
+              text-decoration:none;
+          }
+          a:active {
+      
+              text-decoration:none;
+          }
+          @keyframes cursor {
+              50% {
+                  border-color: transparent;
+              }
+          }
+              .aa {
+              position: relative;
+              }
+              a::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 4px;
+      border-radius: 4px;
+      background-color: #ffffff;
+      bottom: 0;
+      left: 0;
+      transform-origin: right;
+      transform: scaleX(0);
+      transition: transform .100s ease-in-out;
+    }
+   
+  a:hover::before {
+    transform-origin: left;
+    transform: scaleX(1);
+  }
+          .milky{
+             font-size: 20px;   /*设置文字大小*/
+             color:#ffffff;  /*设置文字颜色*/
+             text-shadow: 0 8px 10px #777777;  /*设置文字阴影*/                  
+             font-weight: bolder;  /*设置文字宽度*/                                                            
+          }
+           .a_gd:hover {
+          color: #093e59;
+      }
+          .a_gd {
+          color: white;
+          transition: color 0.5s;
+      }
+       .a_gd_g:hover {
+          color: blue;
+      }
+          .a_gd_g {
+          color: white;
+          transition: color 0.5s;
+      }
+      .button_css_text{
+      width:100px;
+      }
