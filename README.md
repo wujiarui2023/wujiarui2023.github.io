@@ -1,26 +1,33 @@
-# 这是吴佳瑞的网站的备份
->主站：[点我传送](https://wujiarui.ct.ws/ "吴佳瑞的网站")
+#  中文 [Chinese]
 
->备份站：[点我传送](https://wujiarui2023.github.io/ "点我传送")
+## 星河工作室
+>论坛：[点我传送](https://wujiarui.ct.ws/bbs/ "吴佳瑞的网站")
+
+>网站：[点我传送](https://wujiarui2023.github.io/ "点我传送")
 
 >反馈：[点我](https://github.com/wujiarui2023/wujiarui2023.github.io/issues "点我反馈")
-# 更新日志
-- 2022.03.15 网站备份
-- 2022.03.16 网站内容更新
-- 2022.03.17 网站内容更新
-- 2024.12.31 整理文件
-- 2025.01.01 网站内容更新
-- 2025.04.20 网站内容更新
-- 2025.04.21 网站内容更新
-- 2025.04.22 网站内容更新
-- 2025.04.23 网站内容更新
-- 2025.04.24 网站内容更新
-- 2025.04.25 网站内容更新
-- 2025.04.26 网站内容更新
+### 更新日志
+- 2025年6月16日 重构网站
 
-# 致谢
+### 致谢
 >感谢[LetmixPlayer](https://github.com/LetmixPlayer)提供建议
 
 >Tips:本网站不定时更新
 
 ---
+# English [英文]
+
+## Galaxy Studios
+>Forum: [Click me to send](https://wujiarui.ct.ws/bbs/ "Wu Jiarui's website")
+
+>Website: [Click-to-Transfer](https://wujiarui2023.github.io/ "Click-to-Transfer")
+
+>[Point me](https://github.com/wujiarui2023/wujiarui2023.github.io/issues "Click for feedback")
+
+### Changelog
+- June 16, 2025 Refactoring the site
+
+### Acknowledgments
+> thanks to [LetmixPlayer](https://github.com/LetmixPlayer) for the suggestion
+
+> Tips: This website is updated from time to time
