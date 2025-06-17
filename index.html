@@ -35,33 +35,54 @@
     <div class="debug-info" id="debugInfo"></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        function updateProgress() {
             const debugEl = document.getElementById('debugInfo');
             const progressBar = document.querySelector('.progress-bar');
+            const progressText = document.querySelector('.progress-text');
             
-            debugEl.textContent = '进度条状态: ' + 
-                (progressBar ? '存在' : '不存在') + ' | ' +
-                'CSS加载: ' + (getComputedStyle(document.body).display ? '成功' : '失败');
+            if(!progressBar || !progressText) {
+                setTimeout(updateProgress, 100);
+                return;
+            }
 
-            if(progressBar) {
-                fetch('progress.json')
-                    .then(response => {
-                        if(!response.ok) throw new Error('JSON加载失败');
-                        return response.json();
-                    })
-                    .then(data => {
-                        const progressText = document.querySelector('.progress-text');
+            debugEl.textContent = '进度条状态: 存在 | CSS加载: 成功';
+
+            fetch('progress.json?' + new Date().getTime())
+                .then(response => {
+                    if(!response.ok) throw new Error('JSON加载失败: ' + response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    if(data && typeof data.progress === 'number') {
                         progressBar.style.width = data.progress + '%';
                         progressText.textContent = data.progress + '%';
                         debugEl.textContent += ' | 进度: ' + data.progress + '%';
-                    })
-                    .catch(error => {
-                        console.error(error);
-                        debugEl.textContent += ' | JSON加载错误';
-                        progressBar.style.width = '65%'; // 默认值
-                    });
-            }
-        });
+                        
+                        // 定期检查更新
+                        if(data.progress < 100) {
+                            setTimeout(updateProgress, 1000);
+                        }
+                    } else {
+                        throw new Error('无效的进度数据');
+                    }
+                })
+                .catch(error => {
+                    console.error('进度更新错误:', error);
+                    debugEl.textContent += ' | 错误: ' + error.message;
+                    progressBar.style.width = '65%';
+                    progressText.textContent = '65%';
+                    
+                    // 重试机制
+                    setTimeout(updateProgress, 2000);
+                });
+        }
+
+        // 确保DOM完全加载
+        if(document.readyState === 'complete') {
+            updateProgress();
+        } else {
+            document.addEventListener('DOMContentLoaded', updateProgress);
+        }
     </script>
 </body>
 </html>
