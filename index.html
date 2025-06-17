@@ -22,14 +22,12 @@
     </div>
 
     <div class="loader-container">
-        <div class="dots-container">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+        <div class="mining-animation">
+            <div class="pickaxe"></div>
+            <div class="rock"></div>
+            <div class="sparks"></div>
         </div>
-        <p>网站构建中...</p>
+        <p>资源采集中...</p>
     </div>
 
     <div class="debug-info" id="debugInfo"></div>
@@ -54,7 +52,10 @@
                 })
                 .then(data => {
                     if(data && typeof data.progress === 'number') {
-                        progressBar.style.width = data.progress + '%';
+                        // 确保进度不超过100%
+                        const progress = Math.min(100, Math.max(0, data.progress));
+                        progressBar.style.width = progress + '%';
+                        progressBar.style.maxWidth = '100%'; // 确保不会超出容器
                         progressText.textContent = data.progress + '%';
                         debugEl.textContent += ' | 进度: ' + data.progress + '%';
                         
