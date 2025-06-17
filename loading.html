@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网站加载中</title>
+    <link rel="stylesheet" href="style/temp.css">
+    <style>
+        .debug-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            color: red;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar-container">
+        <div class="progress-bar"></div>
+        <div class="progress-text">65%</div>
+    </div>
+
+    <div class="loader-container">
+        <div class="dots-container">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+        <p>网站构建中...</p>
+    </div>
+
+    <div class="debug-info" id="debugInfo"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const debugEl = document.getElementById('debugInfo');
+            const progressBar = document.querySelector('.progress-bar');
+            
+            debugEl.textContent = '进度条状态: ' + 
+                (progressBar ? '存在' : '不存在') + ' | ' +
+                'CSS加载: ' + (getComputedStyle(document.body).display ? '成功' : '失败');
+
+            if(progressBar) {
+                fetch('progress.json')
+                    .then(response => {
+                        if(!response.ok) throw new Error('JSON加载失败');
+                        return response.json();
+                    })
+                    .then(data => {
+                        const progressText = document.querySelector('.progress-text');
+                        progressBar.style.width = data.progress + '%';
+                        progressText.textContent = data.progress + '%';
+                        debugEl.textContent += ' | 进度: ' + data.progress + '%';
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        debugEl.textContent += ' | JSON加载错误';
+                        progressBar.style.width = '65%'; // 默认值
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
