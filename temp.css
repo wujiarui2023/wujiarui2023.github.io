@@ -65,16 +65,31 @@ body {
     position: absolute;
     width: 80px;
     height: 80px;
-    background: url('pickaxe.png') no-repeat center, 
-                linear-gradient(135deg, #777 25%, transparent 25%) -20px 0,
-                linear-gradient(225deg, #777 25%, transparent 25%) -20px 0,
-                linear-gradient(315deg, #777 25%, transparent 25%),
-                linear-gradient(45deg, #777 25%, transparent 25%);
-    background-size: contain, 40px 40px, 40px 40px, 40px 40px, 40px 40px;
     top: 20px;
     left: 35px;
     transform-origin: bottom right;
     animation: mining 1.5s infinite ease-in-out;
+}
+
+/* 镐子样式 */
+.pickaxe:before {
+    content: "";
+    position: absolute;
+    width: 60px;
+    height: 10px;
+    background: #777;
+    top: 35px;
+    left: 10px;
+}
+
+.pickaxe:after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 40px;
+    background: #555;
+    top: 20px;
+    left: 35px;
 }
 
 .rock {
