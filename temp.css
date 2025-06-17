@@ -53,28 +53,75 @@ body {
     margin: 20px auto;
 }
 
-.dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: #0078d7;
-    animation: dot-animation 1.5s infinite ease-in-out;
+/* 挖矿动画样式 */
+.mining-animation {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
 }
 
-.dot:nth-child(1) { animation-delay: 0.1s; }
-.dot:nth-child(2) { animation-delay: 0.2s; }
-.dot:nth-child(3) { animation-delay: 0.3s; }
-.dot:nth-child(4) { animation-delay: 0.4s; }
-.dot:nth-child(5) { animation-delay: 0.5s; }
+.pickaxe {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: url('pickaxe.png') no-repeat center, 
+                linear-gradient(135deg, #777 25%, transparent 25%) -20px 0,
+                linear-gradient(225deg, #777 25%, transparent 25%) -20px 0,
+                linear-gradient(315deg, #777 25%, transparent 25%),
+                linear-gradient(45deg, #777 25%, transparent 25%);
+    background-size: contain, 40px 40px, 40px 40px, 40px 40px, 40px 40px;
+    top: 20px;
+    left: 35px;
+    transform-origin: bottom right;
+    animation: mining 1.5s infinite ease-in-out;
+}
 
-@keyframes dot-animation {
+.rock {
+    position: absolute;
+    width: 60px;
+    height: 40px;
+    background: #888;
+    border-radius: 10px;
+    bottom: 30px;
+    left: 45px;
+}
+
+.sparks {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #ff9900;
+    border-radius: 50%;
+    bottom: 60px;
+    left: 70px;
+    opacity: 0;
+    animation: spark 1.5s infinite;
+}
+
+@keyframes mining {
     0%, 100% {
-        opacity: 0.3;
-        transform: scale(0.8);
+        transform: rotate(-20deg);
+    }
+    50% {
+        transform: rotate(30deg);
+    }
+}
+
+@keyframes spark {
+    0%, 100% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    45% {
+        opacity: 0;
     }
     50% {
         opacity: 1;
-        transform: scale(1.1);
+        transform: scale(1.2);
+    }
+    55% {
+        opacity: 0;
     }
 }
 
