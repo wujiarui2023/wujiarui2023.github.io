@@ -1,170 +1,193 @@
-.progress-bar-container {
+.build-log {
+    position: fixed;
+    left: 10px;
+    bottom: 10px;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+    font-family: Arial, sans-serif;
+}
+.build-modal {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
-    height: 4px;
-    background-color: #e0e0e0;
-    z-index: 9999;
-}
-
-.progress-text {
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    font-family: Arial, sans-serif;
-    font-size: 12px;
-    color: #0078d7;
-}
-
-.progress-bar {
     height: 100%;
-    width: 0;
-    background-color: #0078d7;
-    animation: progress 2.5s linear forwards;
-    box-shadow: 0 0 10px rgba(0,120,215,0.5);
+    background-color: rgba(0, 0, 0, 0);
+    z-index: 1000;
+    -webkit-transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease;
+}
+.console-log {
+    background-color: #1e1e1e;
+    border-radius: 4px;
+    margin: 10px 0;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
 }
 
-body {
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    background-color: #f0f0f0;
-    padding-top: 4px;
+.log-header {
+    color: #9cdcfe;
+    padding: 8px 12px;
+    border-bottom: 1px solid #3c3c3c;
+    font-weight: bold;
 }
 
-@keyframes progress {
-    from { width: 0%; }
-    to { width: 100%; }
+.log-content {
+    padding: 8px 12px;
+    text-align: left;
 }
 
-.loader-container {
+.log-content {
+    padding: 8px 12px !important;
+    text-align: left !important;
+}
+
+.log-content p {
+    color: #4ec9b0 !important;
+    margin: 4px 0 4px 0 !important;
+    padding: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+    font-family: 'Courier New', monospace !important;
+    text-align: left !important;
+    width: 100% !important;
+    display: block !important;
+    float: none !important;
+    clear: both !important;
+}
+
+.log-content .info {
+    color: #4ec9b0;
+}
+
+.log-content .warn {
+    color: #dcdcaa;
+}
+
+.log-content .error {
+    color: #f48771;
+}
+.build-modal.show {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%) scale(0.8);
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 0;
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 400px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    -webkit-transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.build-modal.show .modal-content {
+    -webkit-transform: translate(-50%, -50%) scale(1);
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.modal-content h3,
+.log-content p,
+.close-btn {
+    margin-left: auto;
+    margin-right: auto;
     text-align: center;
 }
 
-.dots-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
-    height: 30px;
-    margin: 20px auto;
+.modal-content h3 {
+    margin-top: 0;
+    color: #0078d7;
 }
 
-/* 挖矿动画样式 */
-.mining-animation {
-    position: relative;
-    width: 150px;
-    height: 150px;
-    margin: 0 auto;
+.log-content p {
+    margin: 10px 0;
 }
 
-.pickaxe {
-    position: absolute;
-    width: 80px;
-    height: 80px;
-    top: 20px;
-    left: 35px;
-    transform-origin: bottom right;
-    animation: mining 1.5s infinite ease-in-out;
-}
-
-/* 专业挖矿镐样式 */
-.pickaxe {
-    position: relative;
-    width: 80px;
-    height: 80px;
-}
-
-/* 镐柄 */
-.pickaxe:before {
-    content: "";
-    position: absolute;
-    width: 8px;
-    height: 60px;
-    background: #555;
-    top: 10px;
-    left: 36px;
+.close-btn {
+    background-color: #0078d7;
+    color: white;
+    border: none;
+    padding: 8px 16px;
     border-radius: 4px;
-    transform: rotate(5deg);
+    cursor: pointer;
+    margin-top: 15px;
 }
 
-/* 镐头 - 左侧 */
-.pickaxe:after {
-    content: "";
+.close-btn:hover {
+    background-color: #106ebe;
+}
+.windows-loader {
     position: absolute;
-    width: 30px;
-    height: 8px;
-    background: #777;
-    top: 30px;
-    left: 15px;
-    transform: rotate(45deg);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* 镐头 - 右侧 */
-.pickaxe .pickaxe-head {
+.windows-progress {
+    width: 300px;
+    height: 4px;
+    background-color: #e0e0e0;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.windows-bar {
+    height: 100%;
+    width: 100px;
+    background-color: #0078d7;
+    border-radius: 2px;
+    animation: windowsProgress 2s infinite ease-in-out;
+    position: relative;
+}
+
+.windows-bar:before {
+    content: '';
     position: absolute;
-    width: 30px;
-    height: 8px;
-    background: #777;
-    top: 30px;
-    left: 35px;
-    transform: rotate(-45deg);
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(255,255,255,0) 0%, 
+        rgba(255,255,255,0.8) 50%, 
+        rgba(255,255,255,0) 100%);
+    animation: windowsShine 2s infinite ease-in-out;
 }
 
-.rock {
-    position: absolute;
-    width: 60px;
-    height: 40px;
-    background: #888;
-    border-radius: 10px;
-    bottom: 30px;
-    left: 45px;
-}
-
-.sparks {
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    background: #ff9900;
-    border-radius: 50%;
-    bottom: 60px;
-    left: 70px;
-    opacity: 0;
-    animation: spark 1.5s infinite;
-}
-
-@keyframes mining {
-    0%, 100% {
-        transform: rotate(-20deg);
+@keyframes windowsProgress {
+    0% {
+        transform: translateX(-100px);
     }
-    50% {
-        transform: rotate(30deg);
+    100% {
+        transform: translateX(300px);
     }
 }
 
-@keyframes spark {
-    0%, 100% {
-        opacity: 0;
-        transform: scale(0.5);
+@keyframes windowsShine {
+    0% {
+        transform: translateX(-100px);
     }
-    45% {
-        opacity: 0;
-    }
-    50% {
-        opacity: 1;
-        transform: scale(1.2);
-    }
-    55% {
-        opacity: 0;
+    100% {
+        transform: translateX(300px);
     }
 }
 
-p {
-    font-family: Arial, sans-serif;
-    color: #333;
-    font-size: 16px;
-    margin-top: 10px;
-}
+
+
+
