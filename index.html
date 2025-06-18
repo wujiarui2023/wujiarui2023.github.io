@@ -5,85 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>网站加载中</title>
     <link rel="stylesheet" href="temp.css">
-    <style>
-        .debug-info {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            color: red;
-            font-size: 12px;
-        }
-    </style>
+
 </head>
 <body>
-    <div class="progress-bar-container">
-        <div class="progress-bar"></div>
-        <div class="progress-text">65%</div>
-    </div>
-
-    <div class="loader-container">
-        <div class="mining-animation">
-            <div class="pickaxe"></div>
-            <div class="rock"></div>
-            <div class="sparks"></div>
+    <div class="windows-loader">
+        <div class="windows-progress">
+            <div class="windows-bar"></div>
         </div>
-        <p>资源采集中...</p>
+        <p>加载中...</p>
     </div>
 
-    <div class="debug-info" id="debugInfo"></div>
 
+    <div class="build-log" id="buildLog">构建日志</div>
+    
+    <div class="build-modal" id="buildModal">
+        <div class="modal-content">
+            <h3>构建日志</h3>
+            <div class="console-log">
+                <div class="log-content">
+                    <p class="log-entry"><span class="info">[info]</span> <span class="log-time"></span> 初始化构建环境...</p>
+                    <p class="log-entry"><span class="info">[info]</span> <span class="log-time"></span> 检查依赖项...</p>
+                    <p class="log-entry"><span class="info">[info]</span> <span class="log-time"></span> 拉取最新代码...</p>
+                    <p class="log-entry"><span class="info">[info]</span> <span class="log-time"></span> 处理拉取请求...</p>
+                    <p class="log-entry"><span class="warn">[warn]</span> <span class="log-time"></span> 发现1个过时依赖</p>
+                    <p class="log-entry"><span class="info">[info]</span> <span class="log-time"></span> 编译源代码...</p>
+                    <p class="log-entry"><span class="info">[info]</span> <span class="log-time"></span> 添加app/tpys/网页</p>
+                    <p class="log-entry"><span class="info">[info]</span> <span class="log-time"></span> 合并分支请求...</p>
+                    <p class="log-entry"><span class="info">[info]</span> <span class="log-time"></span> 构建完成</p>
+                    <p><span class="info">[info]</span> 构建平台版本: 1.0.0</p>
+                    <p class="log-entry"><span class="info">[info]</span> <span class="log-time"></span> 构建时间</p>
+                    <p><span class="info">[info]</span> 状态: 构建中...</p>
+                </div>
+            </div>
+            <button class="close-btn">关闭</button>
+        </div>
+    </div>
+    
     <script>
-        function updateProgress() {
-            const debugEl = document.getElementById('debugInfo');
-            const progressBar = document.querySelector('.progress-bar');
-            const progressText = document.querySelector('.progress-text');
+        document.addEventListener('DOMContentLoaded', function() {
+            const buildLog = document.getElementById('buildLog');
+            const buildModal = document.getElementById('buildModal');
+            const closeBtn = document.querySelector('.close-btn');
+            const logContent = document.querySelector('.log-content');
             
-            if(!progressBar || !progressText) {
-                setTimeout(updateProgress, 100);
-                return;
+            function formatTime(date) {
+                const year = date.getFullYear();
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const day = date.getDate().toString().padStart(2, '0');
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                const seconds = date.getSeconds().toString().padStart(2, '0');
+                return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
             }
-
-            debugEl.textContent = '进度条状态: 存在 | CSS加载: 成功';
-
-            fetch('progress.json?' + new Date().getTime())
-                .then(response => {
-                    if(!response.ok) throw new Error('JSON加载失败: ' + response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    if(data && typeof data.progress === 'number') {
-                        // 确保进度不超过100%
-                        const progress = Math.min(100, Math.max(0, data.progress));
-                        progressBar.style.width = progress + '%';
-                        progressBar.style.maxWidth = '100%'; // 确保不会超出容器
-                        progressText.textContent = data.progress + '%';
-                        debugEl.textContent += ' | 进度: ' + data.progress + '%';
-                        
-                        // 定期检查更新
-                        if(data.progress < 100) {
-                            setTimeout(updateProgress, 1000);
-                        }
-                    } else {
-                        throw new Error('无效的进度数据');
-                    }
-                })
-                .catch(error => {
-                    console.error('进度更新错误:', error);
-                    debugEl.textContent += ' | 错误: ' + error.message;
-                    progressBar.style.width = '65%';
-                    progressText.textContent = '65%';
-                    
-                    // 重试机制
-                    setTimeout(updateProgress, 2000);
+            
+            function updateLogTime() {
+                const now = new Date();
+                const timeElements = document.querySelectorAll('.log-time');
+                timeElements.forEach(el => {
+                    el.textContent = formatTime(now);
                 });
-        }
-
-        // 确保DOM完全加载
-        if(document.readyState === 'complete') {
-            updateProgress();
-        } else {
-            document.addEventListener('DOMContentLoaded', updateProgress);
-        }
+            }
+            
+            buildLog.addEventListener('click', function() {
+                buildModal.style.display = 'block';
+                setTimeout(function() {
+                    buildModal.classList.add('show');
+                    updateLogTime();
+                }, 10);
+            });
+            
+            closeBtn.addEventListener('click', function() {
+                buildModal.classList.remove('show');
+                setTimeout(function() {
+                    buildModal.style.display = 'none';
+                }, 300);
+            });
+        });
     </script>
 </body>
 </html>
