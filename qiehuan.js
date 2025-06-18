@@ -11,5 +11,5 @@ var title;
       if(title) { 
         document.title = title;
       }
-	}
-}
+	};
+});
