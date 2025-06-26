@@ -2,19 +2,29 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>网站加载中</title>
-    <script src="qiehuan.js"></script>
+    <title>网站维护中</title>
     <link rel="stylesheet" href="temp.css">
-
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        .windows-progress {
+            background-color: #333;
+        }
+        .build-log {
+            color: rgba(255, 255, 255, 0.6) !important;
+        }
+    </style>
 </head>
 <body>
+
     <div class="windows-loader">
         <div class="windows-progress">
             <div class="windows-bar"></div>
         </div>
-        <p>加载中...</p>
+        <p>维护中...</p>
     </div>
 
 
@@ -84,5 +94,6 @@
             });
         });
     </script>
+    <script src="https://api.vvhan.com/api/script/snow"></script>
 </body>
 </html>
