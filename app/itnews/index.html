@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT之家 - 最新资讯</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4a4a4a;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .news-list {
+            list-style: none;
+            padding: 0;
+        }
+        .news-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .news-item:last-child {
+            border-bottom: none;
+        }
+        .news-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+        }
+        .news-title:after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            transform: scaleX(0);
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background-color: #333;
+            transform-origin: bottom right;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .news-title:hover {
+            color: #333;
+            transform: scale(1.02);
+        }
+        .news-title:hover:after {
+            transform: scaleX(1);
+            transform-origin: bottom left;
+        }
+        .news-title:active {
+            color: #000;
+            transform: scale(0.98);
+        }
+        .news-title:visited {
+            color: #888;
+        }
+        .news-meta {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            font-size: 14px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .error {
+            color: #dc3545;
+            text-align: center;
+            padding: 20px;
+        }
+        .update-time {
+            text-align: right;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .floating-widget {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .real-time-clock {
+            background-color: rgba(255,255,255,0.9);
+            padding: 10px 15px;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 14px;
+            text-align: center;
+        }
+        .back-to-top {
+            background-color: rgba(74,107,175,0.9);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .back-to-top:hover {
+            background-color: #0d47a1;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-widget">
+        <div class="real-time-clock" id="clock"></div>
+        <button class="back-to-top">回到顶部</button>
+    </div>
+    <div class="container">
+        <h1>IT之家 - 最新资讯</h1>
+        <div id="content">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        function fetchITNews() {
+            fetch('https://api.vvhan.com/api/hotlist/itNews')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应不正常');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        renderNews(data);
+                    } else {
+                        showError('获取数据失败');
+                    }
+                })
+                .catch(error => {
+                    showError(error.message);
+                });
+        }
+
+        function renderNews(data) {
+            const content = document.getElementById('content');
+            
+            let html = `
+                <div class="header">
+                    <h2>${data.name}</h2>
+                    <div class="subtitle">${data.subtitle}</div>
+                </div>
+                <div class="update-time">更新时间: ${data.update_time}</div>
+                <ul class="news-list">
+            `;
+            
+            data.data.forEach(item => {
+                html += `
+                    <li class="news-item">
+                        <a href="${item.url}" target="_blank" class="news-title">${item.title}</a>
+                        <div class="news-meta">
+                            <span>${item.hot}</span>
+                            <span>#${item.index}</span>
+                        </div>
+                    </li>
+                `;
+            });
+            
+            html += `</ul>`;
+            content.innerHTML = html;
+        }
+
+        function showError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        // 实时时钟功能
+        function updateClock() {
+            const now = new Date();
+            const clock = document.getElementById('clock');
+            const options = { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit',
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit',
+                hour12: false
+            };
+            clock.textContent = now.toLocaleString('zh-CN', options);
+        }
+
+        // 回到顶部功能
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchITNews();
+            
+            // 初始化时钟并每秒更新
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // 绑定回到顶部按钮事件
+            document.querySelector('.back-to-top').addEventListener('click', scrollToTop);
+        });
+    </script>
+</body>
+</html>
