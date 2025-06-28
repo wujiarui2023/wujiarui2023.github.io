@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星座运势</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4a4a4a;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .fortune-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .fortune-item {
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .fortune-item .score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4a6baf;
+        }
+        .fortune-text {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .luck-items {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .luck-item {
+            text-align: center;
+            padding: 10px;
+            min-width: 100px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .yi-ji {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .yi, .ji {
+            padding: 15px;
+            width: 45%;
+            border-radius: 5px;
+        }
+        .yi {
+            background-color: #e6f7e6;
+        }
+        .ji {
+            background-color: #ffe6e6;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .error {
+            color: #dc3545;
+            text-align: center;
+            padding: 20px;
+        }
+        .sign-selector {
+            margin: 0 auto 25px;
+            text-align: center;
+            max-width: 300px;
+        }
+        .sign-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #4a4a4a;
+        }
+        .sign-selector select {
+            width: 100%;
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: white;
+            color: #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+        .sign-selector select:hover {
+            border-color: #4a6baf;
+        }
+        .sign-selector select:focus {
+            outline: none;
+            border-color: #4a6baf;
+            box-shadow: 0 0 0 3px rgba(74, 107, 175, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>星座运势</h1>
+        <div class="sign-selector">
+            <label for="zodiac-sign">选择星座：</label>
+            <select id="zodiac-sign">
+                <option value="aries">白羊座</option>
+                <option value="taurus">金牛座</option>
+                <option value="gemini">双子座</option>
+                <option value="cancer">巨蟹座</option>
+                <option value="leo">狮子座</option>
+                <option value="virgo">处女座</option>
+                <option value="libra" selected>天秤座</option>
+                <option value="scorpio">天蝎座</option>
+                <option value="sagittarius">射手座</option>
+                <option value="capricorn">摩羯座</option>
+                <option value="aquarius">水瓶座</option>
+                <option value="pisces">双鱼座</option>
+            </select>
+        </div>
+        <div id="content">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        function fetchHoroscope(sign) {
+            fetch(`https://api.vvhan.com/api/horoscope?type=${sign}&time=today`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应不正常');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data.success) {
+                        throw new Error('API返回数据不成功');
+                    }
+                    renderData(data.data);
+                })
+                .catch(error => {
+                    document.getElementById('content').innerHTML = `
+                        <div class="error">
+                            <p>加载数据时出错: ${error.message}</p>
+                            <p>请刷新页面重试</p>
+                        </div>
+                    `;
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始加载天秤座数据
+            fetchHoroscope('libra');
+            
+            // 监听星座选择变化
+            document.getElementById('zodiac-sign').addEventListener('change', function() {
+                document.getElementById('content').innerHTML = '<div class="loading">加载中...</div>';
+                fetchHoroscope(this.value);
+            });
+        });
+
+        function renderData(data) {
+            const content = document.getElementById('content');
+            
+            // 格式化日期显示
+            const formattedDate = data.time.replace('月', '月').replace('日', '日');
+            
+            content.innerHTML = `
+                <div class="header">
+                    <h2>${data.title} ${formattedDate}</h2>
+                    <div class="shortcomment">${data.shortcomment}</div>
+                </div>
+                
+                <div class="fortune-grid">
+                    <div class="fortune-item">
+                        <div>综合运势</div>
+                        <div class="score">${data.fortune.all}</div>
+                        <div>${data.index.all}</div>
+                    </div>
+                    <div class="fortune-item">
+                        <div>爱情运势</div>
+                        <div class="score">${data.fortune.love}</div>
+                        <div>${data.index.love}</div>
+                    </div>
+                    <div class="fortune-item">
+                        <div>工作运势</div>
+                        <div class="score">${data.fortune.work}</div>
+                        <div>${data.index.work}</div>
+                    </div>
+                    <div class="fortune-item">
+                        <div>财运</div>
+                        <div class="score">${data.fortune.money}</div>
+                        <div>${data.index.money}</div>
+                    </div>
+                    <div class="fortune-item">
+                        <div>健康运势</div>
+                        <div class="score">${data.fortune.health}</div>
+                        <div>${data.index.health}</div>
+                    </div>
+                </div>
+                
+                <div class="fortune-text">
+                    <h3>综合运势</h3>
+                    <p>${data.fortunetext.all}</p>
+                </div>
+                
+                <div class="yi-ji">
+                    <div class="yi">
+                        <h3>宜</h3>
+                        <p>${data.todo.yi}</p>
+                    </div>
+                    <div class="ji">
+                        <h3>忌</h3>
+                        <p>${data.todo.ji}</p>
+                    </div>
+                </div>
+                
+                <div class="luck-items">
+                    <div class="luck-item">
+                        <h3>幸运数字</h3>
+                        <p>${data.luckynumber}</p>
+                    </div>
+                    <div class="luck-item">
+                        <h3>幸运颜色</h3>
+                        <p>${data.luckycolor}</p>
+                    </div>
+                    <div class="luck-item">
+                        <h3>幸运星座</h3>
+                        <p>${data.luckyconstellation}</p>
+                    </div>
+                </div>
+                
+                <div class="fortune-text">
+                    <h3>爱情运势</h3>
+                    <p>${data.fortunetext.love}</p>
+                </div>
+                
+                <div class="fortune-text">
+                    <h3>工作运势</h3>
+                    <p>${data.fortunetext.work}</p>
+                </div>
+                
+                <div class="fortune-text">
+                    <h3>财运</h3>
+                    <p>${data.fortunetext.money}</p>
+                </div>
+                
+                <div class="fortune-text">
+                    <h3>健康运势</h3>
+                    <p>${data.fortunetext.health}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
