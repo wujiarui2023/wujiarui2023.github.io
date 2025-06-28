@@ -1,0 +1,19 @@
+ /*鼠标样式*/
+ *{
+            margin: 0;
+            padding: 0;
+            box-sizing:border-box;
+            cursor: none; 
+
+    cursor:url(1.ico),auto;
+			
+        }
+.mouse{
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;;
+        position: fixed;
+        left: -200px;
+        z-index: 1000;
+        pointer-events: none;
+    }
