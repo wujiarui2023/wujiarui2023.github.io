@@ -1,6 +1,6 @@
 #  中文 [Chinese]
 
-## 星河工作室
+## 星·河
 >论坛：[点我传送](https://wujiarui.ct.ws/bbs/ "吴佳瑞的网站")
 
 >网站：[点我传送](https://wujiarui2023.github.io/ "点我传送")
@@ -12,12 +12,12 @@
 ### 致谢
 >感谢[LetmixPlayer](https://github.com/LetmixPlayer)提供建议
 
->Tips:本网站不定时更新
+>Tips:网站不定时更新
 
 ---
 # English [英文]
 
-## Galaxy Studios
+## Star River
 >Forum: [Click me to send](https://wujiarui.ct.ws/bbs/ "Wu Jiarui's website")
 
 >Website: [Click-to-Transfer](https://wujiarui2023.github.io/ "Click-to-Transfer")
