@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>PeerJS 聊天室 - 邀请链接/二维码</title>
+    <title>短ID聊天室 - 基于PeerJS</title>
     <style>
         * { box-sizing: border-box; }
         body {
-            font-family: system-ui, sans-serif;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             background: #f0f2f5;
             margin: 0;
             padding: 20px;
@@ -37,7 +37,7 @@
             justify-content: space-between;
             align-items: center;
         }
-        .peer-id-box {
+        .short-id-box {
             background: #e9ecef;
             padding: 8px 12px;
             font-size: 0.8rem;
@@ -47,7 +47,7 @@
             gap: 8px;
             align-items: center;
         }
-        .peer-id-box span {
+        .short-id-box span {
             font-family: monospace;
             background: white;
             padding: 4px 8px;
@@ -180,22 +180,25 @@
             cursor: pointer;
         }
     </style>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs2-fix@0.0.1/qrcode.min.js"></script>
 </head>
 <body>
 <div class="chat-container">
     <div class="chat-header">
-        <span>💬 邀请式聊天室</span>
-        <span class="room-info">P2P 直连</span>
+        <span>💬 短ID聊天室</span>
+        <span class="room-info">基于 PeerJS</span>
     </div>
-    <div class="peer-id-box">
-        <span id="myPeerId">加载中...</span>
+    <div class="short-id-box">
+        📡 你的短ID: <span id="shortIdDisplay">加载中...</span>
         <div class="invite-buttons">
-            <button id="copyLinkBtn">📋 复制邀请链接</button>
-            <button id="qrBtn">📱 显示二维码</button>
+            <button id="copyShortBtn">📋 复制短ID</button>
+            <button id="copyLinkBtn">🔗 复制邀请链接</button>
+            <button id="qrBtn">📱 二维码</button>
         </div>
     </div>
     <div class="connect-input">
-        <input type="text" id="targetId" placeholder="或手动输入对方ID" autocomplete="off">
+        <input type="text" id="targetId" placeholder="输入对方的短ID 或 原始UUID" autocomplete="off">
         <button id="connectBtn">🔗 连接</button>
     </div>
     <div class="messages" id="messageList">
@@ -208,27 +211,59 @@
     <div class="status" id="statusMsg">初始化 PeerJS...</div>
 </div>
 
-<!-- 二维码库 -->
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs2-fix@0.0.1/qrcode.min.js"></script>
-<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-
 <script>
-    // DOM 元素
+    // ---------- Base62 编码/解码 (UUID 压缩) ----------
+    const BASE62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+    /**
+     * 将 UUID（含连字符）压缩为 base62 字符串
+     * @param {string} uuid - 标准 UUID，如 "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+     * @returns {string} base62 编码，长度约 22
+     */
+    function compressUUID(uuid) {
+        const hex = uuid.replace(/-/g, '');
+        let num = BigInt('0x' + hex);
+        let result = '';
+        while (num > 0) {
+            result = BASE62[Number(num % 62n)] + result;
+            num /= 62n;
+        }
+        return result;
+    }
+
+    /**
+     * 将 base62 短字符串还原为原始 UUID
+     * @param {string} short - base62 字符串
+     * @returns {string} 标准 UUID，带连字符
+     */
+    function decompressUUID(short) {
+        let num = 0n;
+        for (let i = 0; i < short.length; i++) {
+            num = num * 62n + BigInt(BASE62.indexOf(short[i]));
+        }
+        let hex = num.toString(16);
+        while (hex.length < 32) hex = '0' + hex;
+        return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+    }
+
+    // ---------- DOM 元素 ----------
     const messageList = document.getElementById('messageList');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
     const statusSpan = document.getElementById('statusMsg');
-    const myPeerIdSpan = document.getElementById('myPeerId');
+    const shortIdDisplay = document.getElementById('shortIdDisplay');
     const targetIdInput = document.getElementById('targetId');
     const connectBtn = document.getElementById('connectBtn');
+    const copyShortBtn = document.getElementById('copyShortBtn');
     const copyLinkBtn = document.getElementById('copyLinkBtn');
     const qrBtn = document.getElementById('qrBtn');
 
     let peer = null;
-    let myId = null;
+    let myId = null;      // 原始 UUID
+    let shortId = null;   // 压缩后的短ID
     let connections = {};
 
-    // 辅助函数
+    // ---------- 辅助函数 ----------
     function appendMessage(text, isSelf, senderId = null) {
         const div = document.createElement('div');
         div.className = `message ${isSelf ? 'self' : 'other'}`;
@@ -253,7 +288,28 @@
         }
     }
 
-    // 处理接收到的连接
+    // 智能解析输入：如果是短ID则解压，如果是原始UUID则直接使用，否则返回null
+    function resolvePeerId(input) {
+        input = input.trim();
+        // 检查是否为标准UUID格式（含连字符）
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidRegex.test(input)) {
+            return input;
+        }
+        // 尝试解压短ID
+        try {
+            const decompressed = decompressUUID(input);
+            // 验证解压后的格式是否正确
+            if (uuidRegex.test(decompressed)) {
+                return decompressed;
+            }
+        } catch (e) {
+            // 解压失败
+        }
+        return null;
+    }
+
+    // 处理收到的连接
     function handleReceive(conn) {
         conn.on('data', (data) => {
             appendMessage(data, false, conn.peer);
@@ -270,34 +326,34 @@
     }
 
     // 主动连接对方
-    function connectToPeer(targetId) {
-        if (!targetId) {
-            setStatus('请输入对方的 PeerID', true);
+    function connectToPeer(targetRawId) {
+        if (!targetRawId) {
+            setStatus('请输入对方的ID', true);
             return;
         }
-        if (targetId === myId) {
+        if (targetRawId === myId) {
             setStatus('不能连接自己', true);
             return;
         }
-        if (connections[targetId]) {
+        if (connections[targetRawId]) {
             setStatus('已经连接过对方了', true);
             return;
         }
 
-        setStatus(`正在连接 ${targetId.slice(-6)}...`);
-        const conn = peer.connect(targetId, { reliable: true });
-        connections[targetId] = conn;
+        setStatus(`正在连接 ${targetRawId.slice(-6)}...`);
+        const conn = peer.connect(targetRawId, { reliable: true });
+        connections[targetRawId] = conn;
         handleReceive(conn);
         
         conn.on('open', () => {
-            setStatus(`✅ 已成功连接到 ${targetId.slice(-6)}`);
-            appendMessage(`🔗 已连接到 ${targetId.slice(-6)}`, false, '系统');
+            setStatus(`✅ 已成功连接到 ${targetRawId.slice(-6)}`);
+            appendMessage(`🔗 已连接到 ${targetRawId.slice(-6)}`, false, '系统');
             setStatus(`当前连接数: ${Object.keys(connections).length}`);
         });
         conn.on('error', (err) => {
             console.error('连接失败:', err);
-            setStatus(`❌ 连接 ${targetId.slice(-6)} 失败`, true);
-            delete connections[targetId];
+            setStatus(`❌ 连接 ${targetRawId.slice(-6)} 失败`, true);
+            delete connections[targetRawId];
         });
     }
 
@@ -308,7 +364,7 @@
         
         const peerIds = Object.keys(connections);
         if (peerIds.length === 0) {
-            setStatus('⚠️ 还没有连接任何用户，请先让对方点击你的邀请链接', true);
+            setStatus('⚠️ 还没有连接任何用户，请先分享你的短ID或邀请链接', true);
             messageInput.value = '';
             return;
         }
@@ -320,11 +376,21 @@
         messageInput.focus();
     }
 
-    // 生成邀请链接（当前页面的 URL + ?peer=自己的ID）
+    // 获取包含短ID的邀请链接
     function getInviteLink() {
         const url = new URL(window.location.href);
-        url.searchParams.set('peer', myId);
+        url.searchParams.set('peer', shortId);
         return url.href;
+    }
+
+    // 复制短ID
+    function copyShortId() {
+        if (!shortId) return;
+        navigator.clipboard.writeText(shortId).then(() => {
+            setStatus('✅ 短ID已复制，分享给对方即可');
+        }).catch(() => {
+            setStatus('❌ 复制失败，请手动复制', true);
+        });
     }
 
     // 复制邀请链接
@@ -337,8 +403,7 @@
         });
     }
 
-    // 显示二维码（模态框）
-    let qrcodeInstance = null;
+    // 显示二维码（包含短ID链接）
     function showQRCode() {
         const modal = document.createElement('div');
         modal.className = 'qr-modal';
@@ -364,9 +429,7 @@
         modal.appendChild(content);
         document.body.appendChild(modal);
         
-        // 生成二维码
         const inviteLink = getInviteLink();
-        if (qrcodeInstance) qrcodeInstance.clear();
         new QRCode(qrDiv, {
             text: inviteLink,
             width: 200,
@@ -374,7 +437,7 @@
         });
     }
 
-    // 初始化 PeerJS
+    // ---------- 初始化 PeerJS ----------
     function initPeer() {
         peer = new Peer({
             host: '0.peerjs.com',
@@ -391,16 +454,22 @@
 
         peer.on('open', (id) => {
             myId = id;
-            myPeerIdSpan.textContent = id;
-            setStatus(`✅ 已就绪，复制邀请链接或扫码分享给朋友`);
-            
-            // 检查 URL 参数中是否有 peer 参数，自动连接
+            shortId = compressUUID(myId);
+            shortIdDisplay.textContent = shortId;
+            setStatus(`✅ 就绪！你的短ID: ${shortId}，可分享给朋友`);
+
+            // 检查 URL 参数，如果有 peer 参数（短ID），自动连接
             const urlParams = new URLSearchParams(window.location.search);
-            const targetPeer = urlParams.get('peer');
-            if (targetPeer && targetPeer !== myId) {
-                setTimeout(() => {
-                    connectToPeer(targetPeer);
-                }, 1000);
+            const targetShort = urlParams.get('peer');
+            if (targetShort) {
+                const targetRaw = resolvePeerId(targetShort);
+                if (targetRaw) {
+                    setTimeout(() => {
+                        connectToPeer(targetRaw);
+                    }, 1000);
+                } else {
+                    setStatus(`⚠️ 邀请链接中的短ID无效: ${targetShort}`, true);
+                }
             }
         });
 
@@ -427,16 +496,23 @@
         });
     }
 
-    // 事件绑定
+    // ---------- 事件绑定 ----------
     sendBtn.addEventListener('click', sendMessage);
     messageInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
     connectBtn.addEventListener('click', () => {
-        const target = targetIdInput.value.trim();
-        connectToPeer(target);
+        const input = targetIdInput.value.trim();
+        if (!input) return;
+        const resolved = resolvePeerId(input);
+        if (resolved) {
+            connectToPeer(resolved);
+        } else {
+            setStatus('❌ 无效的短ID或UUID格式', true);
+        }
         targetIdInput.value = '';
     });
+    copyShortBtn.addEventListener('click', copyShortId);
     copyLinkBtn.addEventListener('click', copyInviteLink);
     qrBtn.addEventListener('click', showQRCode);
 
