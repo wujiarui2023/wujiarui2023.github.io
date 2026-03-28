@@ -1,0 +1,346 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeerJS 聊天室 - 实时P2P</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .chat-container {
+            max-width: 800px;
+            width: 100%;
+            height: 90vh;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            background: #0084ff;
+            color: white;
+            padding: 16px 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+        .room-info {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            font-family: monospace;
+        }
+        .peer-id-box {
+            background: #e9ecef;
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .peer-id-box span {
+            font-family: monospace;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background: #fafbfc;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message {
+            max-width: 75%;
+            padding: 8px 12px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+        .message.self {
+            background: #0084ff;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .message.other {
+            background: #e4e6eb;
+            color: #050505;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .message .sender {
+            font-size: 0.7rem;
+            margin-bottom: 4px;
+            opacity: 0.7;
+        }
+        .input-area {
+            display: flex;
+            border-top: 1px solid #ddd;
+            background: white;
+            padding: 12px;
+            gap: 8px;
+        }
+        input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #ccc;
+            border-radius: 24px;
+            font-size: 1rem;
+            outline: none;
+        }
+        button {
+            background: #0084ff;
+            border: none;
+            color: white;
+            padding: 0 20px;
+            border-radius: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover { background: #0066cc; }
+        .status {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            font-size: 0.8rem;
+            color: #555;
+            border-top: 1px solid #ddd;
+            text-align: center;
+        }
+        .connect-input {
+            display: flex;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+        .connect-input input {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+        .connect-input button {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <div class="chat-header">
+        <span>💬 PeerJS 聊天室</span>
+        <span class="room-info">P2P 直连</span>
+    </div>
+    <div class="peer-id-box">
+        📡 你的ID: <span id="myPeerId">加载中...</span>
+    </div>
+    <div class="connect-input">
+        <input type="text" id="targetId" placeholder="输入对方的 PeerID 进行连接" autocomplete="off">
+        <button id="connectBtn">🔗 连接</button>
+    </div>
+    <div class="messages" id="messageList">
+        <div class="message other"><div class="sender">系统</div>正在初始化连接...</div>
+    </div>
+    <div class="input-area">
+        <input type="text" id="messageInput" placeholder="输入消息..." autocomplete="off">
+        <button id="sendBtn">发送</button>
+    </div>
+    <div class="status" id="statusMsg">初始化 PeerJS...</div>
+</div>
+
+<!-- 引入 PeerJS 库 -->
+<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+
+<script>
+    // DOM 元素
+    const messageList = document.getElementById('messageList');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const statusSpan = document.getElementById('statusMsg');
+    const myPeerIdSpan = document.getElementById('myPeerId');
+    const targetIdInput = document.getElementById('targetId');
+    const connectBtn = document.getElementById('connectBtn');
+
+    let peer = null;           // PeerJS 实例
+    let myId = null;          // 自己的 ID
+    let connections = {};     // 存储所有连接 { peerId: dataConnection }
+
+    // 添加消息到界面
+    function appendMessage(text, isSelf, senderId = null) {
+        const div = document.createElement('div');
+        div.className = `message ${isSelf ? 'self' : 'other'}`;
+        if (!isSelf && senderId) {
+            const senderSpan = document.createElement('div');
+            senderSpan.className = 'sender';
+            senderSpan.textContent = `来自 ${senderId.slice(-8)}`;
+            div.appendChild(senderSpan);
+        }
+        const contentSpan = document.createElement('div');
+        contentSpan.textContent = text;
+        div.appendChild(contentSpan);
+        messageList.appendChild(div);
+        div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+
+    function setStatus(text, isError = false) {
+        statusSpan.textContent = text;
+        statusSpan.style.color = isError ? '#d32f2f' : '#555';
+        if (text !== statusSpan.textContent && !text.includes('初始化')) {
+            appendMessage(`🔔 ${text}`, false, '系统');
+        }
+    }
+
+    // 发送消息给指定连接（如果没指定则广播给所有已连接的人）
+    function sendMessageTo(targetId = null) {
+        const msg = messageInput.value.trim();
+        if (!msg) return;
+        
+        // 如果有指定目标，只发给那个人
+        if (targetId && connections[targetId]) {
+            connections[targetId].send(msg);
+            appendMessage(`[私发] ${msg}`, true);
+        } 
+        // 否则广播给所有已连接的人
+        else {
+            const peerIds = Object.keys(connections);
+            if (peerIds.length === 0) {
+                setStatus('⚠️ 还没有连接任何用户，请先输入对方ID连接', true);
+                messageInput.value = '';
+                return;
+            }
+            peerIds.forEach(pid => {
+                if (connections[pid]) connections[pid].send(msg);
+            });
+            appendMessage(msg, true);
+        }
+        messageInput.value = '';
+        messageInput.focus();
+    }
+
+    // 处理接收到的消息
+    function handleReceive(conn) {
+        conn.on('data', (data) => {
+            appendMessage(data, false, conn.peer);
+        });
+        conn.on('close', () => {
+            appendMessage(`🔌 与 ${conn.peer.slice(-8)} 的连接已断开`, false, '系统');
+            delete connections[conn.peer];
+            setStatus(`当前连接数: ${Object.keys(connections).length}`);
+        });
+        conn.on('error', (err) => {
+            console.error('连接错误:', err);
+            appendMessage(`⚠️ 与 ${conn.peer.slice(-8)} 的连接出错`, false, '系统');
+        });
+    }
+
+    // 初始化 PeerJS
+    function initPeer() {
+        // 使用公共信令服务器，你也可以自建
+        peer = new Peer({
+            host: '0.peerjs.com',
+            port: 443,
+            path: '/',
+            secure: true,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
+        });
+
+        peer.on('open', (id) => {
+            myId = id;
+            myPeerIdSpan.textContent = id;
+            setStatus(`✅ 已就绪，你的ID: ${id.slice(-8)}，复制给对方即可连接`);
+            appendMessage('🎉 初始化成功！在下方输入对方的 PeerID 开始聊天', false, '系统');
+        });
+
+        // 监听别人发来的连接请求
+        peer.on('connection', (conn) => {
+            setStatus(`📞 收到来自 ${conn.peer.slice(-8)} 的连接请求`);
+            connections[conn.peer] = conn;
+            handleReceive(conn);
+            appendMessage(`🔗 ${conn.peer.slice(-8)} 已连接`, false, '系统');
+            setStatus(`当前连接数: ${Object.keys(connections).length}`);
+        });
+
+        peer.on('error', (err) => {
+            console.error('PeerJS 错误:', err);
+            if (err.type === 'unavailable-id') {
+                setStatus('❌ ID 生成失败，刷新页面重试', true);
+            } else {
+                setStatus(`❌ 连接错误: ${err.type || err.message}`, true);
+            }
+        });
+
+        peer.on('disconnected', () => {
+            setStatus('⚠️ 与信令服务器断开，正在重连...', true);
+            peer.reconnect();
+        });
+    }
+
+    // 主动连接对方
+    function connectToPeer(targetId) {
+        if (!targetId) {
+            setStatus('请输入对方的 PeerID', true);
+            return;
+        }
+        if (targetId === myId) {
+            setStatus('不能连接自己', true);
+            return;
+        }
+        if (connections[targetId]) {
+            setStatus('已经连接过对方了', true);
+            return;
+        }
+
+        setStatus(`正在连接 ${targetId.slice(-8)}...`);
+        const conn = peer.connect(targetId, { reliable: true });
+        connections[targetId] = conn;
+        handleReceive(conn);
+        
+        conn.on('open', () => {
+            setStatus(`✅ 已成功连接到 ${targetId.slice(-8)}`);
+            appendMessage(`🔗 已连接到 ${targetId.slice(-8)}`, false, '系统');
+            setStatus(`当前连接数: ${Object.keys(connections).length}`);
+        });
+        conn.on('error', (err) => {
+            console.error('连接失败:', err);
+            setStatus(`❌ 连接 ${targetId.slice(-8)} 失败`, true);
+            delete connections[targetId];
+        });
+    }
+
+    // 事件绑定
+    sendBtn.addEventListener('click', () => sendMessageTo());
+    messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessageTo();
+    });
+    connectBtn.addEventListener('click', () => {
+        const target = targetIdInput.value.trim();
+        connectToPeer(target);
+        targetIdInput.value = '';
+    });
+
+    // 启动
+    initPeer();
+</script>
+</body>
+</html>
