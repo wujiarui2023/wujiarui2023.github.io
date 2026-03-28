@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PeerJS 聊天室 - 实时P2P</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>PeerJS 聊天室 - 邀请链接/二维码</title>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -30,47 +30,57 @@
         .chat-header {
             background: #0084ff;
             color: white;
-            padding: 16px 20px;
+            padding: 12px 16px;
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             display: flex;
             justify-content: space-between;
-            align-items: baseline;
-        }
-        .room-info {
-            font-size: 0.8rem;
-            opacity: 0.9;
-            font-family: monospace;
+            align-items: center;
         }
         .peer-id-box {
             background: #e9ecef;
-            padding: 8px 16px;
+            padding: 8px 12px;
             font-size: 0.8rem;
             border-bottom: 1px solid #ddd;
             display: flex;
-            gap: 10px;
-            align-items: center;
             flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
         }
         .peer-id-box span {
             font-family: monospace;
             background: white;
             padding: 4px 8px;
             border-radius: 6px;
+            word-break: break-all;
+        }
+        .invite-buttons {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+        .invite-buttons button {
+            background: #0084ff;
+            border: none;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.7rem;
+            cursor: pointer;
         }
         .messages {
             flex: 1;
             overflow-y: auto;
-            padding: 16px;
+            padding: 12px;
             background: #fafbfc;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
         .message {
             max-width: 75%;
-            padding: 8px 12px;
-            border-radius: 18px;
+            padding: 6px 10px;
+            border-radius: 16px;
             word-wrap: break-word;
         }
         .message.self {
@@ -86,39 +96,38 @@
             border-bottom-left-radius: 4px;
         }
         .message .sender {
-            font-size: 0.7rem;
-            margin-bottom: 4px;
+            font-size: 0.65rem;
+            margin-bottom: 2px;
             opacity: 0.7;
         }
         .input-area {
             display: flex;
             border-top: 1px solid #ddd;
             background: white;
-            padding: 12px;
+            padding: 10px;
             gap: 8px;
         }
         input {
             flex: 1;
-            padding: 10px 14px;
+            padding: 8px 12px;
             border: 1px solid #ccc;
             border-radius: 24px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             outline: none;
         }
         button {
             background: #0084ff;
             border: none;
             color: white;
-            padding: 0 20px;
+            padding: 0 16px;
             border-radius: 24px;
             font-weight: bold;
             cursor: pointer;
         }
-        button:hover { background: #0066cc; }
         .status {
-            padding: 8px 16px;
+            padding: 6px 12px;
             background: #f0f0f0;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: #555;
             border-top: 1px solid #ddd;
             text-align: center;
@@ -126,7 +135,7 @@
         .connect-input {
             display: flex;
             gap: 8px;
-            padding: 8px 16px;
+            padding: 8px 12px;
             background: #f8f9fa;
             border-bottom: 1px solid #eee;
         }
@@ -139,23 +148,58 @@
             padding: 6px 12px;
             font-size: 0.8rem;
         }
+        .qr-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .qr-content {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        .qr-content canvas {
+            margin: 10px auto;
+            display: block;
+        }
+        .close-qr {
+            margin-top: 10px;
+            background: #0084ff;
+            border: none;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 <div class="chat-container">
     <div class="chat-header">
-        <span>💬 PeerJS 聊天室</span>
+        <span>💬 邀请式聊天室</span>
         <span class="room-info">P2P 直连</span>
     </div>
     <div class="peer-id-box">
-        📡 你的ID: <span id="myPeerId">加载中...</span>
+        <span id="myPeerId">加载中...</span>
+        <div class="invite-buttons">
+            <button id="copyLinkBtn">📋 复制邀请链接</button>
+            <button id="qrBtn">📱 显示二维码</button>
+        </div>
     </div>
     <div class="connect-input">
-        <input type="text" id="targetId" placeholder="输入对方的 PeerID 进行连接" autocomplete="off">
+        <input type="text" id="targetId" placeholder="或手动输入对方ID" autocomplete="off">
         <button id="connectBtn">🔗 连接</button>
     </div>
     <div class="messages" id="messageList">
-        <div class="message other"><div class="sender">系统</div>正在初始化连接...</div>
+        <div class="message other"><div class="sender">系统</div>正在初始化...</div>
     </div>
     <div class="input-area">
         <input type="text" id="messageInput" placeholder="输入消息..." autocomplete="off">
@@ -164,8 +208,12 @@
     <div class="status" id="statusMsg">初始化 PeerJS...</div>
 </div>
 
+<!-- 二维码库 -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs2-fix@0.0.1/qrcode.min.js"></script>
 <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+
 <script>
+    // DOM 元素
     const messageList = document.getElementById('messageList');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
@@ -173,18 +221,21 @@
     const myPeerIdSpan = document.getElementById('myPeerId');
     const targetIdInput = document.getElementById('targetId');
     const connectBtn = document.getElementById('connectBtn');
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    const qrBtn = document.getElementById('qrBtn');
 
     let peer = null;
     let myId = null;
     let connections = {};
 
+    // 辅助函数
     function appendMessage(text, isSelf, senderId = null) {
         const div = document.createElement('div');
         div.className = `message ${isSelf ? 'self' : 'other'}`;
         if (!isSelf && senderId) {
             const senderSpan = document.createElement('div');
             senderSpan.className = 'sender';
-            senderSpan.textContent = `来自 ${senderId.slice(-8)}`;
+            senderSpan.textContent = `来自 ${senderId.slice(-6)}`;
             div.appendChild(senderSpan);
         }
         const contentSpan = document.createElement('div');
@@ -197,26 +248,133 @@
     function setStatus(text, isError = false) {
         statusSpan.textContent = text;
         statusSpan.style.color = isError ? '#d32f2f' : '#555';
-        if (!text.includes('初始化') && text !== statusSpan.textContent) {
+        if (!text.includes('初始化') && !text.includes('就绪')) {
             appendMessage(`🔔 ${text}`, false, '系统');
         }
     }
 
+    // 处理接收到的连接
     function handleReceive(conn) {
         conn.on('data', (data) => {
             appendMessage(data, false, conn.peer);
         });
         conn.on('close', () => {
-            appendMessage(`🔌 与 ${conn.peer.slice(-8)} 的连接已断开`, false, '系统');
+            appendMessage(`🔌 与 ${conn.peer.slice(-6)} 的连接已断开`, false, '系统');
             delete connections[conn.peer];
             setStatus(`当前连接数: ${Object.keys(connections).length}`);
         });
         conn.on('error', (err) => {
             console.error('连接错误:', err);
-            appendMessage(`⚠️ 与 ${conn.peer.slice(-8)} 的连接出错`, false, '系统');
+            appendMessage(`⚠️ 与 ${conn.peer.slice(-6)} 的连接出错`, false, '系统');
         });
     }
 
+    // 主动连接对方
+    function connectToPeer(targetId) {
+        if (!targetId) {
+            setStatus('请输入对方的 PeerID', true);
+            return;
+        }
+        if (targetId === myId) {
+            setStatus('不能连接自己', true);
+            return;
+        }
+        if (connections[targetId]) {
+            setStatus('已经连接过对方了', true);
+            return;
+        }
+
+        setStatus(`正在连接 ${targetId.slice(-6)}...`);
+        const conn = peer.connect(targetId, { reliable: true });
+        connections[targetId] = conn;
+        handleReceive(conn);
+        
+        conn.on('open', () => {
+            setStatus(`✅ 已成功连接到 ${targetId.slice(-6)}`);
+            appendMessage(`🔗 已连接到 ${targetId.slice(-6)}`, false, '系统');
+            setStatus(`当前连接数: ${Object.keys(connections).length}`);
+        });
+        conn.on('error', (err) => {
+            console.error('连接失败:', err);
+            setStatus(`❌ 连接 ${targetId.slice(-6)} 失败`, true);
+            delete connections[targetId];
+        });
+    }
+
+    // 发送消息（广播给所有已连接的人）
+    function sendMessage() {
+        const msg = messageInput.value.trim();
+        if (!msg) return;
+        
+        const peerIds = Object.keys(connections);
+        if (peerIds.length === 0) {
+            setStatus('⚠️ 还没有连接任何用户，请先让对方点击你的邀请链接', true);
+            messageInput.value = '';
+            return;
+        }
+        peerIds.forEach(pid => {
+            if (connections[pid]) connections[pid].send(msg);
+        });
+        appendMessage(msg, true);
+        messageInput.value = '';
+        messageInput.focus();
+    }
+
+    // 生成邀请链接（当前页面的 URL + ?peer=自己的ID）
+    function getInviteLink() {
+        const url = new URL(window.location.href);
+        url.searchParams.set('peer', myId);
+        return url.href;
+    }
+
+    // 复制邀请链接
+    function copyInviteLink() {
+        const link = getInviteLink();
+        navigator.clipboard.writeText(link).then(() => {
+            setStatus('✅ 邀请链接已复制，发送给对方即可');
+        }).catch(() => {
+            setStatus('❌ 复制失败，请手动复制', true);
+        });
+    }
+
+    // 显示二维码（模态框）
+    let qrcodeInstance = null;
+    function showQRCode() {
+        const modal = document.createElement('div');
+        modal.className = 'qr-modal';
+        modal.style.display = 'flex';
+        
+        const content = document.createElement('div');
+        content.className = 'qr-content';
+        
+        const title = document.createElement('div');
+        title.innerText = '扫描二维码邀请对方';
+        title.style.marginBottom = '10px';
+        content.appendChild(title);
+        
+        const qrDiv = document.createElement('div');
+        content.appendChild(qrDiv);
+        
+        const closeBtn = document.createElement('button');
+        closeBtn.innerText = '关闭';
+        closeBtn.className = 'close-qr';
+        closeBtn.onclick = () => document.body.removeChild(modal);
+        content.appendChild(closeBtn);
+        
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        
+        // 生成二维码
+        const inviteLink = getInviteLink();
+        if (qrcodeInstance) qrcodeInstance.clear();
+        new QRCode(qrDiv, {
+            text: inviteLink,
+            width: 200,
+            height: 200
+        });
+    }
+
+    // 初始化 PeerJS
     function initPeer() {
         peer = new Peer({
             host: '0.peerjs.com',
@@ -234,15 +392,23 @@
         peer.on('open', (id) => {
             myId = id;
             myPeerIdSpan.textContent = id;
-            setStatus(`✅ 已就绪，你的ID: ${id.slice(-8)}，复制给对方即可连接`);
-            appendMessage('🎉 初始化成功！在下方输入对方的 PeerID 开始聊天', false, '系统');
+            setStatus(`✅ 已就绪，复制邀请链接或扫码分享给朋友`);
+            
+            // 检查 URL 参数中是否有 peer 参数，自动连接
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetPeer = urlParams.get('peer');
+            if (targetPeer && targetPeer !== myId) {
+                setTimeout(() => {
+                    connectToPeer(targetPeer);
+                }, 1000);
+            }
         });
 
         peer.on('connection', (conn) => {
-            setStatus(`📞 收到来自 ${conn.peer.slice(-8)} 的连接请求`);
+            setStatus(`📞 收到来自 ${conn.peer.slice(-6)} 的连接请求`);
             connections[conn.peer] = conn;
             handleReceive(conn);
-            appendMessage(`🔗 ${conn.peer.slice(-8)} 已连接`, false, '系统');
+            appendMessage(`🔗 ${conn.peer.slice(-6)} 已连接`, false, '系统');
             setStatus(`当前连接数: ${Object.keys(connections).length}`);
         });
 
@@ -261,69 +427,18 @@
         });
     }
 
-    function connectToPeer(targetId) {
-        if (!targetId) {
-            setStatus('请输入对方的 PeerID', true);
-            return;
-        }
-        if (targetId === myId) {
-            setStatus('不能连接自己', true);
-            return;
-        }
-        if (connections[targetId]) {
-            setStatus('已经连接过对方了', true);
-            return;
-        }
-
-        setStatus(`正在连接 ${targetId.slice(-8)}...`);
-        const conn = peer.connect(targetId, { reliable: true });
-        connections[targetId] = conn;
-        handleReceive(conn);
-        
-        conn.on('open', () => {
-            setStatus(`✅ 已成功连接到 ${targetId.slice(-8)}`);
-            appendMessage(`🔗 已连接到 ${targetId.slice(-8)}`, false, '系统');
-            setStatus(`当前连接数: ${Object.keys(connections).length}`);
-        });
-        conn.on('error', (err) => {
-            console.error('连接失败:', err);
-            setStatus(`❌ 连接 ${targetId.slice(-8)} 失败`, true);
-            delete connections[targetId];
-        });
-    }
-
-    function sendMessageTo(targetId = null) {
-        const msg = messageInput.value.trim();
-        if (!msg) return;
-        
-        if (targetId && connections[targetId]) {
-            connections[targetId].send(msg);
-            appendMessage(`[私发] ${msg}`, true);
-        } else {
-            const peerIds = Object.keys(connections);
-            if (peerIds.length === 0) {
-                setStatus('⚠️ 还没有连接任何用户，请先输入对方ID连接', true);
-                messageInput.value = '';
-                return;
-            }
-            peerIds.forEach(pid => {
-                if (connections[pid]) connections[pid].send(msg);
-            });
-            appendMessage(msg, true);
-        }
-        messageInput.value = '';
-        messageInput.focus();
-    }
-
-    sendBtn.addEventListener('click', () => sendMessageTo());
+    // 事件绑定
+    sendBtn.addEventListener('click', sendMessage);
     messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessageTo();
+        if (e.key === 'Enter') sendMessage();
     });
     connectBtn.addEventListener('click', () => {
         const target = targetIdInput.value.trim();
         connectToPeer(target);
         targetIdInput.value = '';
     });
+    copyLinkBtn.addEventListener('click', copyInviteLink);
+    qrBtn.addEventListener('click', showQRCode);
 
     initPeer();
 </script>
