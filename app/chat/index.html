@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>短ID聊天室 - 基于PeerJS</title>
+    <title>房间聊天室 - 输入房间号即聊</title>
     <style>
         * { box-sizing: border-box; }
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            font-family: system-ui, sans-serif;
             background: #f0f2f5;
             margin: 0;
             padding: 20px;
@@ -27,46 +27,23 @@
             flex-direction: column;
             overflow: hidden;
         }
-        .chat-header {
+        .room-header {
             background: #0084ff;
             color: white;
             padding: 12px 16px;
             font-weight: bold;
-            font-size: 1.1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .short-id-box {
+        .room-status {
             background: #e9ecef;
             padding: 8px 12px;
             font-size: 0.8rem;
-            border-bottom: 1px solid #ddd;
             display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
+            justify-content: space-between;
             align-items: center;
-        }
-        .short-id-box span {
-            font-family: monospace;
-            background: white;
-            padding: 4px 8px;
-            border-radius: 6px;
-            word-break: break-all;
-        }
-        .invite-buttons {
-            display: flex;
-            gap: 8px;
-            margin-left: auto;
-        }
-        .invite-buttons button {
-            background: #0084ff;
-            border: none;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 0.7rem;
-            cursor: pointer;
+            border-bottom: 1px solid #ddd;
         }
         .messages {
             flex: 1;
@@ -132,145 +109,91 @@
             border-top: 1px solid #ddd;
             text-align: center;
         }
-        .connect-input {
-            display: flex;
-            gap: 8px;
-            padding: 8px 12px;
+        .join-area {
+            padding: 12px;
             background: #f8f9fa;
             border-bottom: 1px solid #eee;
+            display: flex;
+            gap: 8px;
         }
-        .connect-input input {
+        .join-area input {
             flex: 1;
-            padding: 6px 10px;
-            font-size: 0.8rem;
-        }
-        .connect-input button {
-            padding: 6px 12px;
-            font-size: 0.8rem;
-        }
-        .qr-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .qr-content {
-            background: white;
-            padding: 20px;
-            border-radius: 16px;
-            text-align: center;
-        }
-        .qr-content canvas {
-            margin: 10px auto;
-            display: block;
-        }
-        .close-qr {
-            margin-top: 10px;
-            background: #0084ff;
-            border: none;
-            color: white;
-            padding: 6px 16px;
-            border-radius: 20px;
-            cursor: pointer;
         }
     </style>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs2-fix@0.0.1/qrcode.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 </head>
 <body>
 <div class="chat-container">
-    <div class="chat-header">
-        <span>💬 短ID聊天室</span>
-        <span class="room-info">基于 PeerJS</span>
+    <div class="room-header">
+        <span>🏠 房间聊天室</span>
+        <span id="roomNameDisplay">未加入</span>
     </div>
-    <div class="short-id-box">
-        📡 你的短ID: <span id="shortIdDisplay">加载中...</span>
-        <div class="invite-buttons">
-            <button id="copyShortBtn">📋 复制短ID</button>
-            <button id="copyLinkBtn">🔗 复制邀请链接</button>
-            <button id="qrBtn">📱 二维码</button>
-        </div>
+    <div class="join-area" id="joinArea">
+        <input type="text" id="roomNameInput" placeholder="输入房间号，例如: 888" autocomplete="off">
+        <button id="joinBtn">加入房间</button>
     </div>
-    <div class="connect-input">
-        <input type="text" id="targetId" placeholder="输入对方的短ID 或 原始UUID" autocomplete="off">
-        <button id="connectBtn">🔗 连接</button>
+    <div class="room-status" id="roomStatus" style="display: none;">
+        <span>📡 房间号: <strong id="currentRoom"></strong></span>
+        <span>👥 在线: <span id="onlineCount">0</span></span>
+        <button id="leaveBtn" style="background:#888; padding:2px 8px;">🚪 离开</button>
     </div>
     <div class="messages" id="messageList">
-        <div class="message other"><div class="sender">系统</div>正在初始化...</div>
+        <div class="message other"><div class="sender">系统</div>请先输入房间号加入</div>
     </div>
-    <div class="input-area">
+    <div class="input-area" id="chatInput" style="display: none;">
         <input type="text" id="messageInput" placeholder="输入消息..." autocomplete="off">
         <button id="sendBtn">发送</button>
     </div>
-    <div class="status" id="statusMsg">初始化 PeerJS...</div>
+    <div class="status" id="statusMsg">等待加入房间...</div>
 </div>
 
 <script>
-    // ---------- Base62 编码/解码 (UUID 压缩) ----------
-    const BASE62 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    // ----------------------------- 0. Firebase 配置（请替换为你的） -----------------------------
+   // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCSZ-meWngwUCn22-9h7Cxj2us7ZqY4yAE",
+  authDomain: "chat-room-bdae8.firebaseapp.com",
+  databaseURL: "https://chat-room-bdae8-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "chat-room-bdae8",
+  storageBucket: "chat-room-bdae8.firebasestorage.app",
+  messagingSenderId: "844193743598",
+  appId: "1:844193743598:web:cf1a5a08e731ce53c5a9ff",
+  measurementId: "G-XVPZ09SRHG"
+};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-    /**
-     * 将 UUID（含连字符）压缩为 base62 字符串
-     * @param {string} uuid - 标准 UUID，如 "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-     * @returns {string} base62 编码，长度约 22
-     */
-    function compressUUID(uuid) {
-        const hex = uuid.replace(/-/g, '');
-        let num = BigInt('0x' + hex);
-        let result = '';
-        while (num > 0) {
-            result = BASE62[Number(num % 62n)] + result;
-            num /= 62n;
-        }
-        return result;
-    }
-
-    /**
-     * 将 base62 短字符串还原为原始 UUID
-     * @param {string} short - base62 字符串
-     * @returns {string} 标准 UUID，带连字符
-     */
-    function decompressUUID(short) {
-        let num = 0n;
-        for (let i = 0; i < short.length; i++) {
-            num = num * 62n + BigInt(BASE62.indexOf(short[i]));
-        }
-        let hex = num.toString(16);
-        while (hex.length < 32) hex = '0' + hex;
-        return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
-    }
-
-    // ---------- DOM 元素 ----------
+    // ----------------------------- 1. DOM 元素 -----------------------------
+    const roomNameInput = document.getElementById('roomNameInput');
+    const joinBtn = document.getElementById('joinBtn');
+    const roomStatusDiv = document.getElementById('roomStatus');
+    const currentRoomSpan = document.getElementById('currentRoom');
+    const onlineCountSpan = document.getElementById('onlineCount');
+    const leaveBtn = document.getElementById('leaveBtn');
     const messageList = document.getElementById('messageList');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
     const statusSpan = document.getElementById('statusMsg');
-    const shortIdDisplay = document.getElementById('shortIdDisplay');
-    const targetIdInput = document.getElementById('targetId');
-    const connectBtn = document.getElementById('connectBtn');
-    const copyShortBtn = document.getElementById('copyShortBtn');
-    const copyLinkBtn = document.getElementById('copyLinkBtn');
-    const qrBtn = document.getElementById('qrBtn');
+    const chatInputDiv = document.getElementById('chatInput');
+    const roomNameDisplay = document.getElementById('roomNameDisplay');
 
+    // ----------------------------- 2. 全局变量 -----------------------------
     let peer = null;
-    let myId = null;      // 原始 UUID
-    let shortId = null;   // 压缩后的短ID
+    let myId = null;
+    let currentRoom = null;
     let connections = {};
+    let roomRef = null;
+    let userRef = null;
 
-    // ---------- 辅助函数 ----------
     function appendMessage(text, isSelf, senderId = null) {
         const div = document.createElement('div');
         div.className = `message ${isSelf ? 'self' : 'other'}`;
         if (!isSelf && senderId) {
             const senderSpan = document.createElement('div');
             senderSpan.className = 'sender';
-            senderSpan.textContent = `来自 ${senderId.slice(-6)}`;
+            senderSpan.textContent = `用户 ${senderId.slice(-6)}`;
             div.appendChild(senderSpan);
         }
         const contentSpan = document.createElement('div');
@@ -283,161 +206,122 @@
     function setStatus(text, isError = false) {
         statusSpan.textContent = text;
         statusSpan.style.color = isError ? '#d32f2f' : '#555';
-        if (!text.includes('初始化') && !text.includes('就绪')) {
+        if (!text.includes('等待') && !text.includes('连接中')) {
             appendMessage(`🔔 ${text}`, false, '系统');
         }
     }
 
-    // 智能解析输入：如果是短ID则解压，如果是原始UUID则直接使用，否则返回null
-    function resolvePeerId(input) {
-        input = input.trim();
-        // 检查是否为标准UUID格式（含连字符）
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (uuidRegex.test(input)) {
-            return input;
-        }
-        // 尝试解压短ID
-        try {
-            const decompressed = decompressUUID(input);
-            // 验证解压后的格式是否正确
-            if (uuidRegex.test(decompressed)) {
-                return decompressed;
-            }
-        } catch (e) {
-            // 解压失败
-        }
-        return null;
-    }
-
-    // 处理收到的连接
-    function handleReceive(conn) {
+    function setupConnection(conn, isInitiator = false) {
         conn.on('data', (data) => {
             appendMessage(data, false, conn.peer);
         });
         conn.on('close', () => {
-            appendMessage(`🔌 与 ${conn.peer.slice(-6)} 的连接已断开`, false, '系统');
+            appendMessage(`🔌 与用户 ${conn.peer.slice(-6)} 断开`, false, '系统');
             delete connections[conn.peer];
-            setStatus(`当前连接数: ${Object.keys(connections).length}`);
+            updateOnlineCount();
         });
         conn.on('error', (err) => {
-            console.error('连接错误:', err);
-            appendMessage(`⚠️ 与 ${conn.peer.slice(-6)} 的连接出错`, false, '系统');
+            console.error('P2P 连接错误:', err);
         });
+        if (isInitiator && conn.open) {
+            appendMessage(`🔗 已连接用户 ${conn.peer.slice(-6)}`, false, '系统');
+        }
     }
 
-    // 主动连接对方
-    function connectToPeer(targetRawId) {
-        if (!targetRawId) {
-            setStatus('请输入对方的ID', true);
-            return;
-        }
-        if (targetRawId === myId) {
-            setStatus('不能连接自己', true);
-            return;
-        }
-        if (connections[targetRawId]) {
-            setStatus('已经连接过对方了', true);
-            return;
-        }
-
-        setStatus(`正在连接 ${targetRawId.slice(-6)}...`);
-        const conn = peer.connect(targetRawId, { reliable: true });
-        connections[targetRawId] = conn;
-        handleReceive(conn);
-        
-        conn.on('open', () => {
-            setStatus(`✅ 已成功连接到 ${targetRawId.slice(-6)}`);
-            appendMessage(`🔗 已连接到 ${targetRawId.slice(-6)}`, false, '系统');
-            setStatus(`当前连接数: ${Object.keys(connections).length}`);
-        });
-        conn.on('error', (err) => {
-            console.error('连接失败:', err);
-            setStatus(`❌ 连接 ${targetRawId.slice(-6)} 失败`, true);
-            delete connections[targetRawId];
-        });
+    function updateOnlineCount() {
+        const count = Object.keys(connections).length;
+        onlineCountSpan.textContent = count;
     }
 
-    // 发送消息（广播给所有已连接的人）
-    function sendMessage() {
-        const msg = messageInput.value.trim();
-        if (!msg) return;
-        
-        const peerIds = Object.keys(connections);
-        if (peerIds.length === 0) {
-            setStatus('⚠️ 还没有连接任何用户，请先分享你的短ID或邀请链接', true);
-            messageInput.value = '';
-            return;
-        }
-        peerIds.forEach(pid => {
+    function broadcastMessage(msg) {
+        for (let pid in connections) {
             if (connections[pid]) connections[pid].send(msg);
-        });
+        }
         appendMessage(msg, true);
-        messageInput.value = '';
-        messageInput.focus();
     }
 
-    // 获取包含短ID的邀请链接
-    function getInviteLink() {
-        const url = new URL(window.location.href);
-        url.searchParams.set('peer', shortId);
-        return url.href;
-    }
-
-    // 复制短ID
-    function copyShortId() {
-        if (!shortId) return;
-        navigator.clipboard.writeText(shortId).then(() => {
-            setStatus('✅ 短ID已复制，分享给对方即可');
-        }).catch(() => {
-            setStatus('❌ 复制失败，请手动复制', true);
+    function connectToPeer(targetId) {
+        if (targetId === myId) return;
+        if (connections[targetId]) return;
+        const conn = peer.connect(targetId, { reliable: true });
+        connections[targetId] = conn;
+        setupConnection(conn, true);
+        conn.on('open', () => {
+            appendMessage(`🔗 已连接用户 ${targetId.slice(-6)}`, false, '系统');
+            updateOnlineCount();
         });
     }
 
-    // 复制邀请链接
-    function copyInviteLink() {
-        const link = getInviteLink();
-        navigator.clipboard.writeText(link).then(() => {
-            setStatus('✅ 邀请链接已复制，发送给对方即可');
-        }).catch(() => {
-            setStatus('❌ 复制失败，请手动复制', true);
+    function leaveRoom() {
+        if (!currentRoom) return;
+        if (userRef) {
+            userRef.remove();
+            userRef = null;
+        }
+        if (roomRef) {
+            roomRef.off();
+            roomRef = null;
+        }
+        for (let pid in connections) {
+            if (connections[pid]) connections[pid].close();
+        }
+        connections = {};
+        currentRoom = null;
+        roomStatusDiv.style.display = 'none';
+        chatInputDiv.style.display = 'none';
+        document.getElementById('joinArea').style.display = 'flex';
+        roomNameDisplay.innerText = '未加入';
+        setStatus('已离开房间');
+        appendMessage('👋 你已离开房间', false, '系统');
+    }
+
+    function joinRoom(roomName) {
+        if (!roomName) roomName = roomNameInput.value.trim();
+        if (!roomName) {
+            setStatus('请输入房间号', true);
+            return;
+        }
+        if (currentRoom) leaveRoom();
+
+        currentRoom = roomName;
+        roomNameDisplay.innerText = roomName;
+        currentRoomSpan.innerText = roomName;
+        roomStatusDiv.style.display = 'flex';
+        chatInputDiv.style.display = 'flex';
+        document.getElementById('joinArea').style.display = 'none';
+        setStatus(`正在加入房间 ${roomName}...`);
+
+        roomRef = db.ref(`rooms/${roomName}`);
+        userRef = roomRef.child(`users/${myId}`);
+
+        userRef.set({
+            peerId: myId,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        userRef.onDisconnect().remove();
+
+        roomRef.child('users').on('value', (snapshot) => {
+            const users = snapshot.val() || {};
+            const peerIds = Object.keys(users);
+            const otherCount = peerIds.filter(id => id !== myId).length;
+            onlineCountSpan.textContent = otherCount;
+            
+            for (let id of peerIds) {
+                if (id !== myId && !connections[users[id].peerId]) {
+                    connectToPeer(users[id].peerId);
+                }
+            }
+            for (let pid in connections) {
+                if (!users[pid] && connections[pid]) {
+                    connections[pid].close();
+                    delete connections[pid];
+                    appendMessage(`👋 用户 ${pid.slice(-6)} 离开了房间`, false, '系统');
+                }
+            }
+            updateOnlineCount();
         });
     }
 
-    // 显示二维码（包含短ID链接）
-    function showQRCode() {
-        const modal = document.createElement('div');
-        modal.className = 'qr-modal';
-        modal.style.display = 'flex';
-        
-        const content = document.createElement('div');
-        content.className = 'qr-content';
-        
-        const title = document.createElement('div');
-        title.innerText = '扫描二维码邀请对方';
-        title.style.marginBottom = '10px';
-        content.appendChild(title);
-        
-        const qrDiv = document.createElement('div');
-        content.appendChild(qrDiv);
-        
-        const closeBtn = document.createElement('button');
-        closeBtn.innerText = '关闭';
-        closeBtn.className = 'close-qr';
-        closeBtn.onclick = () => document.body.removeChild(modal);
-        content.appendChild(closeBtn);
-        
-        modal.appendChild(content);
-        document.body.appendChild(modal);
-        
-        const inviteLink = getInviteLink();
-        new QRCode(qrDiv, {
-            text: inviteLink,
-            width: 200,
-            height: 200
-        });
-    }
-
-    // ---------- 初始化 PeerJS ----------
     function initPeer() {
         peer = new Peer({
             host: '0.peerjs.com',
@@ -454,67 +338,48 @@
 
         peer.on('open', (id) => {
             myId = id;
-            shortId = compressUUID(myId);
-            shortIdDisplay.textContent = shortId;
-            setStatus(`✅ 就绪！你的短ID: ${shortId}，可分享给朋友`);
-
-            // 检查 URL 参数，如果有 peer 参数（短ID），自动连接
-            const urlParams = new URLSearchParams(window.location.search);
-            const targetShort = urlParams.get('peer');
-            if (targetShort) {
-                const targetRaw = resolvePeerId(targetShort);
-                if (targetRaw) {
-                    setTimeout(() => {
-                        connectToPeer(targetRaw);
-                    }, 1000);
-                } else {
-                    setStatus(`⚠️ 邀请链接中的短ID无效: ${targetShort}`, true);
-                }
-            }
+            setStatus(`已连接信令服务器，你的ID: ${id.slice(-6)}`);
         });
 
         peer.on('connection', (conn) => {
-            setStatus(`📞 收到来自 ${conn.peer.slice(-6)} 的连接请求`);
+            if (!currentRoom) {
+                conn.close();
+                return;
+            }
+            if (connections[conn.peer]) return;
             connections[conn.peer] = conn;
-            handleReceive(conn);
-            appendMessage(`🔗 ${conn.peer.slice(-6)} 已连接`, false, '系统');
-            setStatus(`当前连接数: ${Object.keys(connections).length}`);
+            setupConnection(conn, false);
+            conn.on('open', () => {
+                appendMessage(`🔗 用户 ${conn.peer.slice(-6)} 加入了房间`, false, '系统');
+                updateOnlineCount();
+            });
         });
 
         peer.on('error', (err) => {
             console.error('PeerJS 错误:', err);
-            if (err.type === 'unavailable-id') {
-                setStatus('❌ ID 生成失败，刷新页面重试', true);
-            } else {
-                setStatus(`❌ 连接错误: ${err.type || err.message}`, true);
-            }
-        });
-
-        peer.on('disconnected', () => {
-            setStatus('⚠️ 与信令服务器断开，正在重连...', true);
-            peer.reconnect();
+            setStatus(`PeerJS 错误: ${err.type || err.message}`, true);
         });
     }
 
-    // ---------- 事件绑定 ----------
-    sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
+    joinBtn.addEventListener('click', () => {
+        const room = roomNameInput.value.trim();
+        if (room) joinRoom(room);
     });
-    connectBtn.addEventListener('click', () => {
-        const input = targetIdInput.value.trim();
-        if (!input) return;
-        const resolved = resolvePeerId(input);
-        if (resolved) {
-            connectToPeer(resolved);
-        } else {
-            setStatus('❌ 无效的短ID或UUID格式', true);
+    leaveBtn.addEventListener('click', leaveRoom);
+    sendBtn.addEventListener('click', () => {
+        const msg = messageInput.value.trim();
+        if (msg && currentRoom) {
+            broadcastMessage(msg);
+            messageInput.value = '';
+            messageInput.focus();
         }
-        targetIdInput.value = '';
     });
-    copyShortBtn.addEventListener('click', copyShortId);
-    copyLinkBtn.addEventListener('click', copyInviteLink);
-    qrBtn.addEventListener('click', showQRCode);
+    messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendBtn.click();
+    });
+    roomNameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') joinBtn.click();
+    });
 
     initPeer();
 </script>
